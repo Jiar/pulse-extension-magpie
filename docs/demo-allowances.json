@@ -1,0 +1,57 @@
+{
+  "description": "Wholly synthetic public demo. All names, amounts, timestamps and provider states are fictional; no live accounts or email addresses.",
+  "now": "2026-11-08T12:00:00Z",
+  "config": {
+    "mode": "aggregate",
+    "providers": {"codex": true, "cursor": true, "qoder": false},
+    "showNewProviders": false,
+    "maxAgeSeconds": 0,
+    "balanceAccount": null
+  },
+  "data": [
+    {
+      "provider": "codex",
+      "name": "Codex",
+      "user": "cedar-demo",
+      "plan": "Demo plan",
+      "readAt": "2026-11-08T11:59:00Z",
+      "windows": [
+        {"name": "5 hours", "used": 62, "amount": 62, "limit": 100, "resetsAt": "2026-11-08T15:00:00Z"},
+        {"name": "7 days", "used": 24, "amount": 240, "limit": 1000, "resetsAt": "2026-11-15T12:00:00Z"}
+      ],
+      "resets": {"count": 2}
+    },
+    {
+      "provider": "codex",
+      "name": "Codex",
+      "user": "lumen-demo",
+      "plan": "Demo plan",
+      "readAt": "2026-11-08T11:59:00Z",
+      "windows": [
+        {"name": "5 hours", "used": 34, "amount": 34, "limit": 100, "resetsAt": "2026-11-08T15:00:00Z"}
+      ]
+    },
+    {
+      "provider": "cursor",
+      "name": "Cursor",
+      "user": "orbit-demo",
+      "plan": "Demo plan",
+      "readAt": "2026-11-08T11:59:00Z",
+      "windows": [
+        {"name": "Monthly", "used": 52, "amount": 26, "limit": 50, "resetsAt": "2026-12-01T00:00:00Z"}
+      ],
+      "balance": "$18.40"
+    },
+    {
+      "provider": "qoder",
+      "name": "Qoder",
+      "user": "fern-demo",
+      "plan": "Demo plan",
+      "readAt": "2026-11-08T11:59:00Z",
+      "windows": [
+        {"name": "Monthly", "used": 81, "amount": 810, "limit": 1000, "resetsAt": "2026-12-01T00:00:00Z"}
+      ],
+      "balance": "190 credits"
+    }
+  ]
+}

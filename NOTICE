@@ -1,0 +1,21 @@
+pulse-extension-magpie
+Copyright 2026 Jiar and contributors
+Licensed under the Apache License, Version 2.0.
+
+This project provides an independent integration between Magpie and Pulse.
+Product names and trademarks belong to their respective owners. No endorsement
+is implied and this license grants no third-party trademark rights.
+
+Pulse
+https://github.com/qunqin24/Pulse
+Copyright 2026 qunqin24
+Licensed under the Apache License, Version 2.0.
+A copy is included in native-pulse/LICENSE-Pulse.txt.
+
+The optional native-pulse/detail-card-overflow.patch modifies Pulse's detail-card
+viewport, placement and scrolling behavior, with associated tests and documents.
+Modifications: Copyright 2026 Jiar and contributors, Apache-2.0.
+Source: https://github.com/Jiar/Pulse/commit/cae542ec79748e752f9d5eb0b7487556b0413495
+Demonstration images use fictional data. Their rendering method and provenance
+are documented in docs/images/README.md. No Magpie logo or third-party provider
+artwork is distributed.

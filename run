@@ -1,0 +1,4 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Jiar and contributors
+exec /usr/bin/env python3 -I "$(/usr/bin/dirname "$0")/magpie.py"

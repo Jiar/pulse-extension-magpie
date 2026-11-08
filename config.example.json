@@ -1,0 +1,15 @@
+{
+  "managedBy": "pulse-extension-magpie",
+  "mode": "aggregate",
+  "endpoint": "http://127.0.0.1:3425/v1/magpie/quotas",
+  "showNewProviders": true,
+  "providers": {
+    "codex": true,
+    "cursor": true,
+    "opencode-go": true,
+    "openrouter": true,
+    "qoder": true,
+    "workbuddy": true
+  },
+  "maxAgeSeconds": 0
+}

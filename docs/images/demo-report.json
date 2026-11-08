@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "plan": "2 个服务 · 3 个账号",
+  "limits": [
+    {
+      "id": "magpie-average",
+      "label": "平均用量（2 个服务等权）",
+      "usedPercent": 50.0
+    },
+    {
+      "id": "381c1c3d0bd9.window-ad9f6a78312f",
+      "label": "Codex · cedar-demo · 5 hours",
+      "usedPercent": 62,
+      "used": 62,
+      "limit": 100,
+      "resetsAt": "2026-11-08T15:00:00+00:00",
+      "windowSeconds": 18000
+    },
+    {
+      "id": "381c1c3d0bd9.window-0e6e0e897682",
+      "label": "Codex · cedar-demo · 7 days",
+      "usedPercent": 24,
+      "used": 240,
+      "limit": 1000,
+      "resetsAt": "2026-11-15T12:00:00+00:00",
+      "windowSeconds": 604800
+    },
+    {
+      "id": "88f418c2e41b.window-ad9f6a78312f",
+      "label": "Codex · lumen-demo · 5 hours",
+      "usedPercent": 34,
+      "used": 34,
+      "limit": 100,
+      "resetsAt": "2026-11-08T15:00:00+00:00",
+      "windowSeconds": 18000
+    },
+    {
+      "id": "229ae944ffdc.window-450cae36c54f",
+      "label": "Cursor · orbit-demo · Monthly",
+      "usedPercent": 52,
+      "used": 26,
+      "limit": 50,
+      "resetsAt": "2026-12-01T00:00:00+00:00"
+    }
+  ],
+  "balance": {
+    "amount": 18.4,
+    "currency": "USD"
+  },
+  "metrics": [
+    {
+      "id": "381c1c3d0bd9.resets",
+      "label": "Codex · cedar-demo · Quota resets available",
+      "value": 2,
+      "unit": "times"
+    },
+    {
+      "id": "source-age",
+      "label": "最早来源数据距今",
+      "value": 1.0,
+      "unit": "min"
+    }
+  ]
+}

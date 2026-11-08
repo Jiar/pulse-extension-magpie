@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "id": "magpie-allowances",
+  "name": "Magpie",
+  "executable": "run",
+  "timeoutSeconds": 15
+}

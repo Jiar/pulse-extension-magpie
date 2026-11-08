@@ -1,0 +1,1128 @@
+diff --git a/Docs/extensions.md b/Docs/extensions.md
+index dd866fa..135aefc 100644
+--- a/Docs/extensions.md
++++ b/Docs/extensions.md
+@@ -137,7 +137,7 @@ Figures that are not limits — a relay's time to first token, its output rate,
+ | `metrics[].history[]` | Optional series of `{"t": ISO 8601 time, "v": number}`, in any order. Pulse sorts it, keeps one point per time (the first given), and keeps the newest 120 points. |
+ 
+ - **Rows on the card, under the limits and the balance.** At most **four** metrics are read; the rest are left off, in the program's order. The figure is rounded to two decimal places for display, and a figure too small for that keeps two significant digits rather than reading as zero.
+-- **A trend line for the first two with a series** of at least two points at different times. It is placed by time, so a gap in the points shows as a gap, and scaled between the series' own lowest and highest point. It has one colour whichever way it moves: only the program knows whether lower is better. The card draws no more than two lines because the panel's window is sized for its tallest card, and a third would push a card with a few limits past it.
++- **A trend line for the first two with a series** of at least two points at different times. It is placed by time, so a gap in the points shows as a gap, and scaled between the series' own lowest and highest point. It has one colour whichever way it moves: only the program knows whether lower is better. The card draws no more than two lines. Long cards keep the account header and the ring's selected quota fixed while the other limits, balance and metrics scroll inside the panel's existing height budget.
+ - **Read each point in Settings.** The panel never becomes the key window, so its lines have no hover readout. The extension's own pane has a **Metrics** group that lists every metric and draws every series, with the time and value of each point on hover.
+ - **Never the ring, and never a reading on its own.** A metric has no ceiling, so a reply with metrics and neither a limit nor a balance still shows "No limits reported."
+ - **A metric Pulse cannot use takes nothing else with it.** One without a label, or with a value that is not a number, is left off; so is a history point without a valid time or number. A `metrics` value that is not a list is ignored. The limits and the balance beside it are read as usual.
+diff --git a/Docs/ui/panel-geometry.md b/Docs/ui/panel-geometry.md
+index bbe80da..3c2680c 100644
+--- a/Docs/ui/panel-geometry.md
++++ b/Docs/ui/panel-geometry.md
+@@ -8,7 +8,7 @@ The window **may** resize when the rail is re-docked onto the other axis (side 
+ 
+ - Apply `.padding(.top, railTop)` **after** the card overlay. Before it, the card is anchored to the panel top and sliced `railTop` too high (shipped once; invisible while the rail is centred).
+ - **`Layout.size` is whole points** (rounded up). AppKit rounds the window frame and SwiftUI draws against it, while hit tests use `Layout.size`; at 280.44 the docked rail's hit rect stopped 0.56pt short of the screen edge and the sliver opened and shut in a loop. `RailGeometryTests`.
+-- The frame fits the **tallest card**, not just the rail (`max(DockLayout.maximum…, DetailCardLayout.maximumHeight)`), or the card is sliced flat against the edge.
++- Before any card opens, the frame reserves **75% of the owning display's usable height** for cards (`Layout.size(cardHeight:)`). Beside the rail its height is the larger of that budget and the rail budget; above/below it, rail, notch, gap and pointer allowances are added. Normal placement, dragging, spring settling and liquid pull room use the same screen budget. `DetailCardLayout.maximumHeight` is only a fallback for unplaced views and previews.
+ - The rail is centred in the panel (`PanelEdge.railAlignment`). `railTop` / `railLeading` convert rail-relative card positions (may be negative) to panel space. The pointer is panel-relative.
+ - The window is sized for the rings **switched on** (`AppSettings.railSlotCount` → `PanelMetrics.makeRoom`), not every provider (dozens of providers made it thousands of points taller than any screen). Each path below ends in `placePanel()`; miss one and the window's rects are measured against a rail of the old length:
+   - a provider switched on or off, or the shown accounts changing: `settingsChanged()`. This **does** resize the window.
+@@ -23,7 +23,7 @@ The window **may** resize when the rail is re-docked onto the other axis (side 
+ - Percentages swap outright (`.contentTransition(.identity)`); a cross-fade overlapped them and a numeric roll showed blank digits.
+ - **Keep all of it short.** A sweep down the rail switches cards every ~0.1s and restarts every transition; at 0.14s + 0.22s the card was mostly empty. The card's spring (`selectedSlot`) is 0.28s for the same reason.
+ 
+-**`UsageBubbleShape` is the card and its pointer as one path**, same winding (`sweep` when mirrored); two views in a stack drift apart when height and pointer target change together. `pointerCenter` is `animatableData`. Check both edges after any change. With `usesRoundEnds` on, the tail's flanks leave the card **along its edge** (first control point on the edge) and bend out to a ~50° tip; off, they leave at an angle and crease where they meet the card.
++**`UsageBubbleShape` is the card and its pointer as one path**, same winding (`sweep` when mirrored); two views in a stack drift apart when height and pointer target change together. `pointerCenter` is `animatableData`. The card's origin prefers the usable area intersected with the granted panel frame (`PanelPlacement.cardBounds`), preserving its nonzero panel-local origin. If that intersection cannot contain the card or its selected ring, the origin keeps both the card and its pointer anchor within the granted window instead; a free rail with snapping off may already overlap a side Dock. This prevents moving the card beyond the window and clipping its rows. `DetailCardAnchor` then expresses the ring centre relative to that origin. The tip follows this anchor; only the tail's base is clamped away from rounded corners. Check all four edges, both end rings and tiny cards after any change. With `usesRoundEnds` on, the tail's flanks leave the card **along its edge** (first control point on the edge) and bend out to a ~50° tip; off, they leave at an angle and crease where they meet the card.
+ 
+ **On glass the surface is two shapes fused** (`LiquidBubbleSurface` in UsageDetailCard.swift): `UsageBubbleShape.only(.body)` and `.only(.tail)` as two `glassEffect`s in a `GlassEffectContainer` (spacing 12pt × scale). As one outline, glass refracted the narrow tail as all rim, like a crystal stuck on the card. On real glass the flowing tail and a single-contour outline changed nothing, and spacing 40 rippled the body's edge. Content is masked to the whole outline; the solid card fills it in one go.
+ 
+@@ -66,7 +66,7 @@ Other rules:
+ - **The chart is static**: the panel never becomes key, so a hover readout would not fire.
+ - **The ledger is read off the card** (`CardLedgers`): on selection, at most every five minutes per provider (so one statistics request for Z.ai and Zhipu), or at once when the source changed (a console session read or removed), in a task not tied to the view. A sweep would cancel a view task, and a cancelled caller gets an empty ledger that would be stored as "no history".
+ - **Budget:** `PanelMetrics.showsDetailedCard` is true while *any* account's card is detailed; `DetailCardLayout.height` then adds the header's second line and the activity section, each at a named height so budget and drawing cannot drift. One frame serves every ring. Only the app's own `AppSettings` writes the metric (`drivesPanelMetrics`), so a test's instance cannot resize another test's frame.
+-- **An extension's metrics take no budget of their own** ([../extensions.md](../extensions.md#metrics)). A metric is a `ValueRow`; a trend line (`MetricTrendLine`, `chartHeight`) is about a limit row's height, so the card draws at most `DetailCardLayout.metricTrendLimit` (2) and reads at most four metrics, which fit `maximumHeight` beside a few limits and a balance. Lines are static; the extension's Settings pane has the hover readout.
++- **An extension's metrics take no window budget of their own** ([../extensions.md](../extensions.md#metrics)). A metric is a `ValueRow`; a trend line (`MetricTrendLine`, `chartHeight`) is about a limit row's height. The card keeps its existing limit of `DetailCardLayout.metricTrendLimit` (2) trends and four metrics; long combinations of limits, balance and metrics scroll within the screen-based card budget. Lines are static; the extension's Settings pane has the hover readout.
+ 
+ ## Dock, float, displays
+ 
+@@ -75,7 +75,7 @@ Other rules:
+ - Drag anywhere; fuse to an edge within `dockDistance` **during** the drag, not on mouse-up. A free upright rail stays at least `dockDistance` from both sides while snapping is on (flush, it would look docked); a rail lying across, or any free rail with snapping off, goes flush to the sides (`PanelPlacement.sideMargin`). Held back, a rail lying across stopped 32pt short of a side while the hand kept moving.
+ - Off an edge the rail stands free **the way it already runs** (off the top it stays across, off a side upright); it turns only when it fuses to an edge of the other axis. An upright rail thrown at the bottom of the usable area (pointer within `dockDistance`) lies across, card opening up.
+ - **Snap to screen edges** (`AppSettings.snapsToEdges`, on by default; #85). Off, a drag never docks or turns the rail: it stands free the way it ran when picked up (`PanelPlacement.dragDock`), anywhere on the screen: its room is the whole screen rather than the usable area (`PanelPlacement.room`), so it can lie over the menu bar or beside the Dock, and while it reaches past the usable area it is raised to `.statusBar` (`PanelPlacement.isBeyond`, `applyLevel(for:beyond:)`) or it would be drawn under them. Switching snapping re-measures a free rail's ratios against the new room from where it is (`keepFreeRailInPlace`), so it does not jump by the Dock's or the menu bar's height. Choosing a position in Settings still docks it. Changing it re-places the panel (`onLayoutChange`); `PanelPlacement.snapsToEdges` is the controller's copy.
+-- **A card taller than its side of the screen scrolls** (`UsageDetailCard.maxHeight`, `PanelPlacement.cardRoom`). Lying across, the room (rail to the usable edge, less the gap) is computed at placement and every drag frame; a card that does not fit keeps that height and scrolls inside (bounce only when it scrolls), and the window keeps its size. Turning the card cannot help: it already opens to the roomier half, and mid-screen both are short (13" display: 498pt needed, 403 left). Down a side the card slides along the rail, unlimited. `CardRoomTests`.
++- **Long cards keep a fixed summary and scroll their details** (`UsageDetailCard`, `DetailCardViewport`, `PanelPlacement.cardRoom`). On every edge, docked or floating, the entire card is capped at 75% of the display's usable height; a finite screen limit replaces the old six-row fallback. Lying across, the rail-to-usable-edge distance less the gap can make it shorter still; room is recomputed at placement and every drag frame. Only top/bottom pointers consume vertical room. The account header and the quota selected by the ring (including native pins and model-group filtering) stay above the scroll view; the other quotas retain source order, followed by reset credits, balance, metrics, messages and history. Nothing is truncated to a row count. Short cards keep their natural height and disable scrolling/bounce. If even the summary plus a usable details viewport cannot fit, the whole card scrolls. Opening a reading starts at the top, including after its measured height replaces the initial estimate. Selecting another account or headline resets the scroll view. Opening, switching and scrolling never resize the panel or move the rail. `CardRoomTests`, `DetailCardViewportTests`, `DetailCardOverflowTests` cover budget/selection rules and hosted layout; real non-key-panel wheel/trackpad delivery still needs native input evidence.
+ - Any display, remembered by **UUID**, not `CGDirectDisplayID`; missing display → main. `didChangeScreenParametersNotification` re-places (not during a drag).
+ - Clamp each frame to the screen under the **pointer**, not the window's screen, or a second monitor is unreachable.
+ - Store the **rail's** position, never the window's: the window is much wider, and the rail's side flips at screen mid.
+diff --git a/Sources/Pulse/Panel/FloatingPanelController.swift b/Sources/Pulse/Panel/FloatingPanelController.swift
+index c174906..1e86d78 100644
+--- a/Sources/Pulse/Panel/FloatingPanelController.swift
++++ b/Sources/Pulse/Panel/FloatingPanelController.swift
+@@ -45,16 +45,19 @@ final class FloatingPanelController {
+             for edge: PanelEdge,
+             notchSize: CGSize? = nil,
+             capacity: Int = PanelMetrics.railCapacity,
+-            docked: Bool = true
++            docked: Bool = true,
++            cardHeight: CGFloat = DetailCardLayout.maximumHeight
+         ) -> CGSize {
+-            let size = unrounded(for: edge, notchSize: notchSize, capacity: capacity, docked: docked)
++            let size = unrounded(for: edge, notchSize: notchSize, capacity: capacity,
++                                 docked: docked, cardHeight: max(cardHeight, 0))
+             return CGSize(width: size.width.rounded(.up), height: size.height.rounded(.up))
+         }
+ 
+         /// `docked` only moves the lying rail's thickness: free across with
+         /// its figures under the rings it is thicker than the top dock, and
+         /// the top dock keeps exactly its own budget.
+-        private static func unrounded(for edge: PanelEdge, notchSize: CGSize?, capacity: Int, docked: Bool) -> CGSize {
++        private static func unrounded(for edge: PanelEdge, notchSize: CGSize?, capacity: Int,
++                                      docked: Bool, cardHeight: CGFloat) -> CGSize {
+             // Card + its pointer + the gap after it, which is the room the
+             // card unfolds into whichever way it unfolds.
+             let reach = DetailCardLayout.width
+@@ -70,7 +73,7 @@ final class FloatingPanelController {
+                     // beside it. A card taller than the window gets sliced off
+                     // flat against its edge, which reads as a drawing bug
+                     // rather than as a card that didn't fit.
+-                    height: max(DockLayout.maximumLength(on: .vertical, capacity: capacity), DetailCardLayout.maximumHeight)
++                    height: max(DockLayout.maximumLength(on: .vertical, capacity: capacity), cardHeight)
+                 )
+             case .horizontal:
+                 // At a notch, the housing **and** the fillets either side of
+@@ -86,7 +89,7 @@ final class FloatingPanelController {
+                         + (notchSize?.height ?? 0)
+                         + DetailCardLayout.horizontalGap
+                         + DetailCardLayout.pointerWidth
+-                        + DetailCardLayout.maximumHeight
++                        + cardHeight
+                 )
+             }
+         }
+@@ -466,7 +469,8 @@ final class FloatingPanelController {
+             in: placement.room(visible: screen.visibleFrame, screen: screen.frame),
+             topEdge: FloatingPanel.topEdge(of: screen),
+             bottomEdge: screen.frame.minY,
+-            panel: Layout.size(for: edge, notchSize: placement.notch?.size, docked: placement.isDocked),
++            panel: Layout.size(for: edge, notchSize: placement.notch?.size, docked: placement.isDocked,
++                               cardHeight: DetailCardLayout.screenHeightLimit(in: screen.visibleFrame)),
+             rail: railSize
+         )
+ 
+@@ -478,6 +482,7 @@ final class FloatingPanelController {
+             beyond: PanelPlacement.isBeyond(screen.visibleFrame, railOrigin: layout.railOrigin, rail: railSize)
+         )
+         panel.setFrame(layout.frame, display: true)
++        placement.setPanelFrame(panel.frame, visible: screen.visibleFrame)
+         // **Measured against the frame the window actually got**, not the one
+         // it was asked for. The panel is as tall as a rail with every account
+         // on, which is taller than a laptop's usable screen, and AppKit will
+@@ -752,7 +757,7 @@ private final class FloatingPanel: NSPanel {
+             // drawing back while the rail already follows the hand inside
+             // it; only then does the rail stand free. Cut short if the rail
+             // would leave the window.
+-            let inside = distance < Self.room(inside: held, rail: rail, notch: placement.notch) - 2
++            let inside = distance < Self.room(inside: held, rail: rail, notch: placement.notch, visible: visible) - 2
+             let now = CACurrentMediaTime()
+             if !elsewhere {
+                 if let since = partingSince {
+@@ -916,8 +921,11 @@ private final class FloatingPanel: NSPanel {
+ 
+     /// How far a rail can be drawn in from `edge` and stay inside the window
+     /// the dock gives it.
+-    private static func room(inside edge: PanelEdge, rail: CGSize, notch: CGRect?) -> CGFloat {
+-        let panel = FloatingPanelController.Layout.size(for: edge, notchSize: notch?.size, docked: true)
++    private static func room(inside edge: PanelEdge, rail: CGSize, notch: CGRect?, visible: CGRect) -> CGFloat {
++        let panel = FloatingPanelController.Layout.size(
++            for: edge, notchSize: notch?.size, docked: true,
++            cardHeight: DetailCardLayout.screenHeightLimit(in: visible)
++        )
+         return edge.isVertical
+             ? panel.width - rail.width
+             : panel.height - rail.height - (notch?.height ?? 0)
+@@ -1061,7 +1069,8 @@ private final class FloatingPanel: NSPanel {
+ 
+         placement.notch = target.notch
+         let panelSize = FloatingPanelController.Layout.size(
+-            for: placement.edge, notchSize: target.notch?.size, docked: target.dock.isDocked
++            for: placement.edge, notchSize: target.notch?.size, docked: target.dock.isDocked,
++            cardHeight: DetailCardLayout.screenHeightLimit(in: visible)
+         )
+ 
+         // One source of truth for the geometry: ask the placement where that
+@@ -1081,6 +1090,7 @@ private final class FloatingPanel: NSPanel {
+             beyond: PanelPlacement.isBeyond(visible, railOrigin: layout.railOrigin, rail: target.rail)
+         )
+         setFrame(layout.frame, display: true)
++        placement.setPanelFrame(frame, visible: visible)
+         // Same rule as `placePanel`: the frame is a request, and on a screen
+         // the panel does not fit the rail has to be measured against what the
+         // window was actually given, or it slides out from under the pointer
+@@ -1116,7 +1126,10 @@ private final class FloatingPanel: NSPanel {
+             in: room,
+             topEdge: Self.topEdge(of: screen),
+             bottomEdge: screen.frame.minY,
+-            panel: FloatingPanelController.Layout.size(for: placement.edge, notchSize: notch?.size, docked: true),
++            panel: FloatingPanelController.Layout.size(
++                for: placement.edge, notchSize: notch?.size, docked: true,
++                cardHeight: DetailCardLayout.screenHeightLimit(in: screen.visibleFrame)
++            ),
+             rail: rail
+         )
+         return CGPoint(x: layout.railOrigin.x, y: layout.railOrigin.y - rail.height)
+diff --git a/Sources/Pulse/Panel/FloatingUsagePanelContent.swift b/Sources/Pulse/Panel/FloatingUsagePanelContent.swift
+index 36cc986..b9049f3 100644
+--- a/Sources/Pulse/Panel/FloatingUsagePanelContent.swift
++++ b/Sources/Pulse/Panel/FloatingUsagePanelContent.swift
+@@ -105,6 +105,7 @@ struct FloatingUsagePanelContent: View {
+                             usesGlass: settings.usesGlass,
+                             usage: selected,
+                             title: selectedTitle ?? "",
++                            preferredWindowID: entries[index].headline?.id,
+                             edge: placement.edge,
+                             showsRemaining: settings.showsRemaining,
+                             showsForecast: settings.showsForecast,
+@@ -318,13 +319,12 @@ struct FloatingUsagePanelContent: View {
+     /// stay level with the ring it belongs to.
+     private var alongEdge: Edge.Set { placement.edge.isVertical ? .top : .leading }
+ 
+-    /// The panel's own extent along that axis, which is what the card is
+-    /// clamped inside.
+-    private var panelAlong: CGFloat {
+-        let panel = FloatingPanelController.Layout.size(
++    /// Use the granted window geometry for both placement and pointer bands.
++    /// The default is only needed before the controller's first placement.
++    private var panelSize: CGSize {
++        placement.panelSize ?? FloatingPanelController.Layout.size(
+             for: placement.edge, notchSize: placement.notch?.size, docked: placement.isDocked
+         )
+-        return placement.edge.isVertical ? panel.height : panel.width
+     }
+ 
+     /// How far the rail is offset along its own run inside the panel.
+@@ -383,33 +383,29 @@ struct FloatingUsagePanelContent: View {
+         placement.edge.isVertical ? cardHeight : DetailCardLayout.width
+     }
+ 
+-    /// How far along the rail the card starts, measured from the rail's own
+-    /// leading corner.
+-    ///
+-    /// Clamped against the *panel*, not the rail: the card can be longer than
+-    /// the rail, and the panel has room past it at both ends, so the card is
+-    /// allowed into that space — going negative to start before the rail does
+-    /// — rather than being pushed past the window's edge and cut off square.
++    /// Clamp in the visible part of the actual panel, retaining its origin
++    /// when the window extends above or beside the owning display.
++    private func cardAnchor(for index: Int) -> DetailCardAnchor {
++        let bounds = placement.cardPlacementBounds ?? CGRect(origin: .zero, size: panelSize)
++        return DetailCardAnchor(
++            ring: railAlong + ringCentre(for: index), length: cardAlong,
++            lowerBound: placement.edge.isVertical ? bounds.minY : bounds.minX,
++            upperBound: placement.edge.isVertical ? bounds.maxY : bounds.maxX,
++            panelLength: placement.edge.isVertical ? panelSize.height : panelSize.width
++        )
++    }
++
++    /// The overlay starts in the rail's coordinates, so convert back once.
+     private func cardPadding(for index: Int) -> CGFloat {
+-        let raw = ringCentre(for: index) - cardAlong / 2
+-        let first = -railAlong
+-        let last = max(panelAlong - railAlong - cardAlong, first)
+-        return min(max(raw, first), last)
++        cardAnchor(for: index).origin - railAlong
+     }
+ 
+-    /// Where the pointer sits inside the card: the ring's centre expressed
+-    /// relative to the card's own leading corner, so the tip keeps aiming at
+-    /// the ring even when the card has been clamped away from centre. Kept
+-    /// clear of the card's rounded corners by one corner radius.
+     /// The pointer, in the panel's own coordinates. See `pointerMoved`.
+     @State private var pointerPoint: CGPoint?
+ 
++    /// Only the base avoids the corners; the tip stays aligned with the ring.
+     private func pointerCentre(for index: Int) -> CGFloat {
+-        let raw = ringCentre(for: index) - cardPadding(for: index)
+-        let inset = DetailCardLayout.cornerRadius + DetailCardLayout.pointerHeight / 2
+-        let first = min(inset, cardAlong / 2)
+-        let last = max(cardAlong - inset, first)
+-        return min(max(raw, first), last)
++        cardAnchor(for: index).pointer
+     }
+ 
+     /// How far the card sits clear of the rail: beside it, its own width plus
+@@ -628,9 +624,7 @@ struct FloatingUsagePanelContent: View {
+         // stopping at the card's own edge, so the gap the pointer crosses
+         // between the rail and the card is covered too. The slack along it
+         // keeps the boundary from feeling like a trip wire at the card's edge.
+-        let panel = FloatingPanelController.Layout.size(
+-            for: edge, notchSize: placement.notch?.size, docked: placement.isDocked
+-        )
++        let panel = panelSize
+         let start = railAlong + cardPadding(for: index) - PanelHitArea.slack
+         let length = cardAlong + PanelHitArea.slack * 2
+ 
+diff --git a/Sources/Pulse/Panel/PanelPlacement.swift b/Sources/Pulse/Panel/PanelPlacement.swift
+index 2092fcd..6bfe3cc 100644
+--- a/Sources/Pulse/Panel/PanelPlacement.swift
++++ b/Sources/Pulse/Panel/PanelPlacement.swift
+@@ -216,21 +216,41 @@ final class PanelPlacement {
+         return !visible.insetBy(dx: -0.5, dy: -0.5).contains(rect)
+     }
+ 
+-    /// How tall a card may be on the side it opens to, for a rail lying
+-    /// across: from the rail to the screen's usable edge, less the gap. Nil
+-    /// down a side, where the card slides along the rail instead. Set where
+-    /// the panel is placed, never persisted (`UsageDetailCard.maxHeight`).
++    /// The card's height limit, including a vertical pointer. Computed for
++    /// every edge at placement and while dragging, never persisted.
+     var cardRoom: CGFloat?
++    /// Granted panel geometry, shared by card placement and pointer hit bands.
++    /// These are transient measurements, never persisted or driven by a card.
++    private(set) var panelSize: CGSize?
++    private(set) var cardPlacementBounds: CGRect?
++
++    /// Converts the owning screen's usable area to the actual panel's flipped
++    /// coordinates. Preserve the origin: an oversized window can extend above it.
++    static func cardBounds(visible: CGRect, panelFrame: CGRect) -> CGRect {
++        let local = CGRect(x: visible.minX - panelFrame.minX,
++                           y: panelFrame.maxY - visible.maxY,
++                           width: visible.width, height: visible.height)
++        let bounds = local.intersection(CGRect(origin: .zero, size: panelFrame.size))
++        return bounds.isNull || bounds.isEmpty ? .zero : bounds
++    }
++
++    func setPanelFrame(_ frame: CGRect, visible: CGRect) {
++        panelSize = frame.size
++        cardPlacementBounds = Self.cardBounds(visible: visible, panelFrame: frame)
++    }
+ 
+-    /// The room a card has beyond a lying rail whose top-left is `railOrigin`.
++    /// A horizontal rail opens toward the usable edge; beside a vertical rail
++    /// the card can slide along the whole usable height. Both leave breathing
++    /// room on the display. Placement reserves the screen budget in the window.
+     static func cardRoom(edge: PanelEdge, railOrigin: CGPoint, rail: CGSize, in visible: CGRect) -> CGFloat? {
+         let room: CGFloat
+         switch edge {
+         case .top: room = (railOrigin.y - rail.height) - visible.minY
+         case .bottom: room = visible.maxY - railOrigin.y
+-        case .left, .right: return nil
++        case .left, .right: room = visible.height
+         }
+-        return max(room - DetailCardLayout.horizontalGap, 0)
++        return max(min(room - DetailCardLayout.horizontalGap,
++                       DetailCardLayout.screenHeightLimit(in: visible)), 0)
+     }
+ 
+     /// Which display the rail was left on, as `PanelScreen` names them.
+diff --git a/Sources/Pulse/Panel/UsageBubbleShape.swift b/Sources/Pulse/Panel/UsageBubbleShape.swift
+index 73ff62b..2bbd3e9 100644
+--- a/Sources/Pulse/Panel/UsageBubbleShape.swift
++++ b/Sources/Pulse/Panel/UsageBubbleShape.swift
+@@ -86,13 +86,13 @@ struct UsageBubbleShape: Shape {
+     /// The tail, as a subpath overlapping the body's edge so the two read as a
+     /// single silhouette once filled.
+     private func pointerPath(in rect: CGRect, body: CGRect) -> Path {
+-        let half = pointerHeight / 2
+-        // Keep the tail clear of the rounded corners, and inside the card even
+-        // when the caller asks for something out of range.
+-        let centre = min(
+-            max(pointerCenter, cornerRadius + half),
+-            max(rect.height - cornerRadius - half, cornerRadius + half)
+-        )
++        let radius = min(cornerRadius, rect.height / 2)
++        let half = min(pointerHeight / 2, max(rect.height / 2 - radius, 0))
++        // Keep the base off the corners, but aim the tip at the actual ring.
++        // Clamping the tip with the base made end rings point beside the arrow.
++        let tip = min(max(pointerCenter, 0), rect.height)
++        let inset = radius + half
++        let centre = min(max(tip, inset), max(rect.height - inset, inset))
+ 
+         let baseX = tailLeads ? body.minX : body.maxX
+         let tipX = tailLeads ? rect.minX : rect.maxX
+@@ -125,13 +125,15 @@ struct UsageBubbleShape: Shape {
+         var path = Path()
+         path.move(to: CGPoint(x: baseX, y: centre - sweep))
+         path.addCurve(
+-            to: CGPoint(x: tipX, y: centre),
++            to: CGPoint(x: tipX, y: tip),
+             control1: CGPoint(x: baseX + reach * nearAlong, y: centre - sweep * nearAcross),
+-            control2: CGPoint(x: baseX + reach * farAlong, y: centre - sweep * farAcross)
++            control2: CGPoint(x: baseX + reach * farAlong,
++                              y: min(max(tip - sweep * farAcross, 0), rect.height))
+         )
+         path.addCurve(
+             to: CGPoint(x: baseX, y: centre + sweep),
+-            control1: CGPoint(x: baseX + reach * farAlong, y: centre + sweep * farAcross),
++            control1: CGPoint(x: baseX + reach * farAlong,
++                              y: min(max(tip + sweep * farAcross, 0), rect.height)),
+             control2: CGPoint(x: baseX + reach * nearAlong, y: centre + sweep * nearAcross)
+         )
+         // Bite back into the body so the join is covered by the fill rather
+diff --git a/Sources/Pulse/Panel/UsageDetailCard.swift b/Sources/Pulse/Panel/UsageDetailCard.swift
+index c4298ab..152d11f 100644
+--- a/Sources/Pulse/Panel/UsageDetailCard.swift
++++ b/Sources/Pulse/Panel/UsageDetailCard.swift
+@@ -70,16 +70,15 @@ enum DetailCardLayout {
+     /// instead — see its `cardHeight`.
+     static var estimatedHeight: CGFloat { height(forWindows: 2) }
+ 
+-    /// Room the panel has to leave for the tallest card it might have to show.
+-    ///
+-    /// The panel's frame is fixed, and a card taller than it gets sliced off
+-    /// square against the window's edge — which looks like a rendering bug,
+-    /// not like a card that didn't fit. Providers report a variable number of
+-    /// limits (Codex adds one group per model with its own limits), so this
+-    /// budgets for more than are on screen today.
+-    /// One row more than the limits for Codex's reset-credit lines: the count
+-    /// and the soonest expiry are two text lines, which together are shorter
+-    /// than a limit's row and so fit inside the budget of one.
++    /// Leave space around a long card on the display that owns the rail.
++    static var maximumScreenFraction: CGFloat { 0.75 }
++    static func screenHeightLimit(in visible: CGRect) -> CGFloat {
++        max(visible.height, 0) * maximumScreenFraction
++    }
++
++    /// Fallback body budget for previews and views not yet placed on a screen.
++    /// The live panel reserves 75% of its owning display's usable height
++    /// before any card opens; that screen budget replaces this row estimate.
+     static var maximumHeight: CGFloat { height(forWindows: 6, footnote: true) }
+ 
+     static func height(forWindows count: Int, footnote: Bool = false) -> CGFloat {
+@@ -154,6 +153,9 @@ struct UsageDetailCard: View {
+     /// same plan are told apart by nothing else, and a card headed "Codex" on
+     /// both of them is a card that cannot say which one you are looking at.
+     var title: String?
++    /// The resolved quota used by the selected ring, including a native pin
++    /// and any per-model group filtering. It remains visible while scrolling.
++    var preferredWindowID: String?
+     /// Which screen edge the panel is docked against; the pointer goes on the
+     /// side facing the rail.
+     let edge: PanelEdge
+@@ -194,19 +196,17 @@ struct UsageDetailCard: View {
+     /// Where red begins, so the card's bars agree with the rail's rings.
+     @Environment(\.usageWarningThreshold) private var warningThreshold
+ 
+-    /// The tallest the card may be, pointer included, or nil for no limit —
+-    /// the room between the rail and the screen's edge on the side it opens
+-    /// to, for a rail lying across (`PanelPlacement.cardRoom`).
++    /// Available screen height, pointer included. Even without a placement
++    /// limit the body must fit the fixed panel's card budget.
+     var maxHeight: CGFloat?
+-    /// The card's contents at their own height, measured inside the scroll
+-    /// view so a limited card knows whether it has to scroll at all.
+-    @State private var naturalHeight: CGFloat?
++    @State private var summaryHeight: CGFloat?
++    @State private var detailHeight: CGFloat?
+ 
+     var body: some View {
+         bounded
+         // Room for the pointer on the side facing the rail. The shape below
+         // covers the whole frame, body and pointer together.
+-        .padding(Self.pointerSide(for: edge), DetailCardLayout.pointerWidth)
++        .padding(Self.pointerSide(for: edge), pointerLength)
+         // **Inside the card, never ahead of it.** Switching between two cards
+         // of different heights keeps this one view and swaps its rows: the
+         // outline grows on the panel's spring, but a row the new card adds is
+@@ -223,62 +223,123 @@ struct UsageDetailCard: View {
+         .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
+     }
+ 
+-    /// The contents, scrolling **only when the screen cannot hold them**.
+-    ///
+-    /// A rail lying across opens its card into one half of the screen, and
+-    /// near the middle that half can be shorter than a tall card — a detailed
+-    /// card with a forecast and many limits on a 13" display was 95pt taller
+-    /// than the room below the rail, and its foot was cut off by the screen.
+-    /// Turning the card the other way does not help there: the rail already
+-    /// opens it to the roomier half. So it scrolls, inside the same outline.
+-    /// The window keeps its size; only the card is shorter.
++    /// The ring's own selection, kept out of the scrolling details. Selecting
++    /// a quota near the end of a long extension must not hide the summary.
++    var summaryWindow: UsageWindow? { usage.headlineWindow(preferring: preferredWindowID) }
++    var detailWindows: [UsageWindow] {
++        let summaryID = summaryWindow?.id
++        return usage.windows.filter { $0.id != summaryID }
++    }
++
++    private var hasDetails: Bool {
++        if !detailWindows.isEmpty || resetCredits != nil || !usage.metrics.isEmpty || saysNothing
++            || footnote != nil || (isDetailed && (spend != nil || qoderCredits != nil)) {
++            return true
++        }
++        if (usage.windows.isEmpty || usage.provider == .pulseExtension), usage.creditBalance != nil { return true }
++        if case .unavailable = usage.state { return true }
++        return false
++    }
++
++    private var viewport: DetailCardViewport {
++        let summary = summaryHeight ?? (DetailCardLayout.headerHeight
++            + (isDetailed ? DetailCardLayout.rowTextLineHeight : 0)
++            + (summaryWindow == nil ? 0 : DetailCardLayout.contentSpacing + DetailCardLayout.rowHeight))
++        return DetailCardViewport(
++            limit: DetailCardViewport.bodyLimit(
++                maxHeight: maxHeight, fallbackHeight: DetailCardLayout.maximumHeight,
++                pointerHeight: edge.isVertical ? 0 : DetailCardLayout.pointerWidth),
++            summary: summary,
++            details: hasDetails ? (detailHeight ?? DetailCardLayout.rowHeight) : 0,
++            spacing: DetailCardLayout.contentSpacing, padding: DetailCardLayout.padding,
++            minimumDetailHeight: DetailCardLayout.rowHeight
++        )
++    }
++
++    /// Always bounded by the fixed window, on every edge. Short cards retain
++    /// their natural height. Only an unusually small placement scrolls the
++    /// summary too, so neither it nor the details become unreachable.
+     @ViewBuilder
+     private var bounded: some View {
+-        if let limit = maxHeight.map({ $0 - DetailCardLayout.pointerWidth }),
+-           limit < DetailCardLayout.maximumHeight {
+-            let natural = naturalHeight ?? min(DetailCardLayout.estimatedHeight, limit)
+-            ScrollView(.vertical) {
+-                content.background(
+-                    GeometryReader { proxy in
+-                        Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
+-                            naturalHeight = height
+-                        }
++        let layout = viewport
++        if layout.fixesSummary {
++            VStack(alignment: .leading, spacing: hasDetails ? DetailCardLayout.contentSpacing : 0) {
++                measuredSummary
++                if hasDetails {
++                    ScrollView(.vertical) {
++                        measuredDetails
+                     }
+-                )
++                    .defaultScrollAnchor(.top)
++                    .scrollBounceBehavior(.basedOnSize)
++                    .scrollDisabled(!layout.scrolls)
++                    .frame(height: layout.detailHeight)
++                    .id(usage.account.id + ":" + (summaryWindow?.id ?? ""))
++                }
+             }
+-            .scrollBounceBehavior(.basedOnSize)
+-            .scrollDisabled(natural <= limit)
+-            .frame(width: DetailCardLayout.width, height: max(min(natural, limit), 0))
++            .padding(DetailCardLayout.padding)
++            .frame(width: DetailCardLayout.width, height: layout.height, alignment: .topLeading)
+         } else {
+-            content
++            ScrollView(.vertical) {
++                VStack(alignment: .leading, spacing: hasDetails ? DetailCardLayout.contentSpacing : 0) {
++                    measuredSummary
++                    if hasDetails { measuredDetails }
++                }
++                .padding(DetailCardLayout.padding)
++            }
++            .defaultScrollAnchor(.top)
++            .scrollBounceBehavior(.basedOnSize)
++            .frame(width: DetailCardLayout.width, height: layout.height)
++            .id(usage.account.id + ":" + (summaryWindow?.id ?? ""))
+         }
+     }
+ 
+-    private var content: some View {
++    private var measuredSummary: some View {
+         VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
+             header
++            if let window = summaryWindow { quotaRow(window) }
++        }
++        .frame(maxWidth: .infinity, alignment: .leading)
++        .fixedSize(horizontal: false, vertical: true)
++        .background(GeometryReader { proxy in
++            Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
++                summaryHeight = height
++            }
++        })
++    }
++
++    private var measuredDetails: some View {
++        details
++            .frame(maxWidth: .infinity, alignment: .leading)
++            .fixedSize(horizontal: false, vertical: true)
++            .background(GeometryReader { proxy in
++                Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
++                    detailHeight = height
++                }
++            })
++    }
++
++    private func quotaRow(_ window: UsageWindow) -> some View {
++        ProgressMetricRow(
++            title: window.name,
++            resetDescription: Self.resetText(window),
++            progress: showsRemaining ? window.remainingFraction : window.usedFraction,
++            accent: window.tint(warningAt: warningThreshold),
++            percentageText: window.percentText(remaining: showsRemaining),
++            isSpent: UsageTint.isSpent(window),
++            showsRemaining: showsRemaining,
++            burn: showsForecast ? BurnRate.reading(for: window) : nil,
++            value: valueText(window),
++            amount: showsAmounts || window.amounts?.currency != nil
++                ? Self.amountText(window, remaining: showsRemaining) : nil
++        )
++        .transition(Self.rowTransition)
++    }
+ 
+-            // However many limits the provider reports — one account-wide
+-            // window for some plans, several once per-model limits apply.
+-            ForEach(usage.windows) { window in
+-                ProgressMetricRow(
+-                    title: window.name,
+-                    resetDescription: Self.resetText(window),
+-                    progress: showsRemaining ? window.remainingFraction : window.usedFraction,
+-                    accent: window.tint(warningAt: warningThreshold),
+-                    percentageText: window.percentText(remaining: showsRemaining),
+-                    isSpent: UsageTint.isSpent(window),
+-                    showsRemaining: showsRemaining,
+-                    // Every provider, not a chosen few: what this needs is a
+-                    // percentage, a reset and a length the provider actually
+-                    // stated, and `BurnRate` refuses the windows that lack one
+-                    // rather than being told in advance which they are.
+-                    burn: showsForecast ? BurnRate.reading(for: window) : nil,
+-                    value: valueText(window),
+-                    amount: showsAmounts || window.amounts?.currency != nil
+-                        ? Self.amountText(window, remaining: showsRemaining) : nil
+-                )
+-                .transition(Self.rowTransition)
++    private var details: some View {
++        VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
++            // Keep every other quota in source order, including the last one.
++            ForEach(detailWindows) { window in
++                quotaRow(window)
+             }
+ 
+             // **A card with only a title in it reads as a card that failed to
+@@ -346,8 +407,6 @@ struct UsageDetailCard: View {
+                     .transition(Self.rowTransition)
+             }
+         }
+-        .padding(DetailCardLayout.padding)
+-        .frame(width: DetailCardLayout.width, alignment: .leading)
+     }
+ 
+     /// The soonest available credit's expiry, with the year: a credit can
+@@ -395,12 +454,17 @@ struct UsageDetailCard: View {
+         )
+     }
+ 
++    private var pointerLength: CGFloat {
++        edge.isVertical ? DetailCardLayout.pointerWidth
++            : min(DetailCardLayout.pointerWidth, max(maxHeight ?? DetailCardLayout.pointerWidth, 0))
++    }
++
+     private var bubble: UsageBubbleShape {
+         UsageBubbleShape(
+             edge: edge,
+             pointerCenter: pointerCenter,
+             cornerRadius: DetailCardLayout.cornerRadius,
+-            pointerWidth: DetailCardLayout.pointerWidth,
++            pointerWidth: pointerLength,
+             pointerHeight: DetailCardLayout.pointerHeight
+         )
+     }
+diff --git a/Tests/PulseTests/BottomDockTests.swift b/Tests/PulseTests/BottomDockTests.swift
+index 71e2eba..dbc3ee2 100644
+--- a/Tests/PulseTests/BottomDockTests.swift
++++ b/Tests/PulseTests/BottomDockTests.swift
+@@ -55,21 +55,32 @@ extension PanelGlobalsSuite {
+         }
+     }
+ 
+-    /// The room a card has beyond a rail lying across, which is what limits it
+-    /// and makes it scroll when the screen cannot hold it.
++    /// Available card height on every edge, including a rail standing upright.
+     @Suite("Card room")
+     struct CardRoomTests {
+         private let visible = CGRect(x: 0, y: 72, width: 1470, height: 855)
+         private let rail = CGSize(width: 400, height: 64)
+ 
+-        @Test("Below a rail it is down to the visible bottom, above one up to the visible top, less the gap; none down a side")
++        @Test("Every edge has bounded room, with the rail-to-screen gap respected across")
+         func room() {
+             // Rail top at y 600: its bottom is 536, 464 above the Dock's line.
+             let below = PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: 600), rail: rail, in: visible)
+             #expect(below == 600 - 64 - 72 - DetailCardLayout.horizontalGap)
+             let above = PanelPlacement.cardRoom(edge: .bottom, railOrigin: CGPoint(x: 0, y: 600), rail: rail, in: visible)
+             #expect(above == 72 + 855 - 600 - DetailCardLayout.horizontalGap)
+-            #expect(PanelPlacement.cardRoom(edge: .left, railOrigin: .zero, rail: rail, in: visible) == nil)
++            for edge in [PanelEdge.left, .right] {
++                #expect(PanelPlacement.cardRoom(edge: edge, railOrigin: .zero, rail: rail, in: visible)
++                    == visible.height * DetailCardLayout.maximumScreenFraction)
++            }
++            // A docked rail can have more room than the card should occupy.
++            #expect(PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: visible.maxY),
++                                           rail: rail, in: visible)
++                == visible.height * DetailCardLayout.maximumScreenFraction)
++            let offset = visible.offsetBy(dx: -1800, dy: -400)
++            #expect(PanelPlacement.cardRoom(edge: .bottom, railOrigin: CGPoint(x: offset.minX, y: 200),
++                                           rail: rail, in: offset)
++                == offset.maxY - 200 - DetailCardLayout.horizontalGap)
++            #expect(PanelPlacement.cardRoom(edge: .right, railOrigin: .zero, rail: rail, in: .zero) == 0)
+             // Never negative, whatever the rail is doing.
+             #expect(PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: 80), rail: rail, in: visible) == 0)
+         }
+diff --git a/Sources/Pulse/Panel/DetailCardViewport.swift b/Sources/Pulse/Panel/DetailCardViewport.swift
+new file mode 100644
+index 0000000..4b2840e
+--- /dev/null
++++ b/Sources/Pulse/Panel/DetailCardViewport.swift
+@@ -0,0 +1,55 @@
++// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
++import Foundation
++
++/// Divides a bounded card between its fixed summary and scrolling details.
++/// No window state: opening a longer reading must never resize the panel.
++struct DetailCardViewport: Equatable {
++    let height: CGFloat
++    let detailHeight: CGFloat
++    let fixesSummary: Bool
++    let scrolls: Bool
++
++    /// Placement reserves the screen budget before any card opens. Only a
++    /// top/bottom pointer consumes vertical room; unplaced previews use a fallback.
++    static func bodyLimit(maxHeight: CGFloat?, fallbackHeight: CGFloat, pointerHeight: CGFloat) -> CGFloat {
++        guard let maxHeight, maxHeight.isFinite else { return max(fallbackHeight, 0) }
++        return max(maxHeight - pointerHeight, 0)
++    }
++
++    init(limit: CGFloat, summary: CGFloat, details: CGFloat, spacing: CGFloat, padding: CGFloat,
++         minimumDetailHeight: CGFloat) {
++        let limit = max(limit, 0)
++        let summary = max(summary, 0)
++        let details = max(details, 0)
++        let padding = max(padding, 0)
++        let gap = details > 0 ? max(spacing, 0) : 0
++        let natural = padding * 2 + summary + gap + details
++        height = min(natural, limit)
++        // At an extremely short top/bottom placement even the summary cannot
++        // fit. Let the whole card scroll rather than clip an unscrollable title.
++        fixesSummary = summary + padding * 2 + gap + min(details, max(minimumDetailHeight, 0)) <= limit
++        let room = max(limit - padding * 2 - summary - gap, 0)
++        detailHeight = fixesSummary ? min(details, room) : height
++        scrolls = natural > limit
++    }
++}
++
++/// Prefers the visible part of the granted window, but never pushes a card
++/// outside the window when that intersection is too short to contain it.
++/// The tip follows the ring independently of the base's corner clearance.
++struct DetailCardAnchor {
++    let origin: CGFloat
++    let pointer: CGFloat
++
++    init(ring: CGFloat, length: CGFloat, lowerBound: CGFloat, upperBound: CGFloat, panelLength: CGFloat) {
++        let lastInPanel = max(panelLength - length, 0)
++        // A visible ring must remain within the card's pointer edge, even
++        // when a freely placed rail overlaps the menu bar or a side Dock.
++        let firstForRing = min(max(ring - length, 0), lastInPanel)
++        let lastForRing = min(max(ring, 0), lastInPanel)
++        let first = min(max(lowerBound, firstForRing), lastForRing)
++        let last = min(max(upperBound - length, first), lastForRing)
++        origin = min(max(ring - length / 2, first), last)
++        pointer = ring - origin
++    }
++}
+diff --git a/Tests/PulseTests/DetailCardAnchorTests.swift b/Tests/PulseTests/DetailCardAnchorTests.swift
+new file mode 100644
+index 0000000..e431ebb
+--- /dev/null
++++ b/Tests/PulseTests/DetailCardAnchorTests.swift
+@@ -0,0 +1,163 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import Pulse
++
++extension PanelGlobalsSuite {
++    @MainActor
++    @Suite("Screen-bounded detail card anchors")
++    struct DetailCardAnchorTests {
++        @Test("The screen budget is reserved before opening on every edge")
++        func reservation() {
++            for height: CGFloat in [855, 1_400, 1_123.5] {
++                let visible = CGRect(x: -1_800, y: 52, width: 1_800, height: height)
++                let budget = DetailCardLayout.screenHeightLimit(in: visible)
++                #expect(budget == height * 0.75)
++                for edge in [PanelEdge.left, .right, .top, .bottom] {
++                    for docked in [false, true] {
++                        for notch: CGSize? in [nil, CGSize(width: 210, height: 38)] {
++                            let panel = FloatingPanelController.Layout.size(
++                                for: edge, notchSize: notch, capacity: 1, docked: docked, cardHeight: budget)
++                            let fallback = FloatingPanelController.Layout.size(
++                                for: edge, notchSize: notch, capacity: 1, docked: docked)
++                            #expect(panel.width == fallback.width)
++                            #expect(panel.width == panel.width.rounded(.up))
++                            #expect(panel.height == panel.height.rounded(.up))
++                            let expected = edge.isVertical
++                                ? max(DockLayout.maximumLength(on: .vertical, capacity: 1), budget)
++                                : DockLayout.thickness(on: .horizontal, docked: docked)
++                                    + (notch?.height ?? 0) + DetailCardLayout.horizontalGap
++                                    + DetailCardLayout.pointerWidth + budget
++                            #expect(panel.height == expected.rounded(.up))
++                        }
++                    }
++                }
++            }
++        }
++
++        @Test("Visible card bounds retain offsets in an oversized granted frame")
++        func grantedBounds() {
++            let visible = CGRect(x: -1_800, y: -200, width: 1_800, height: 855)
++            let frame = CGRect(x: -1_900, y: -300, width: 800, height: 1_200)
++            let bounds = PanelPlacement.cardBounds(visible: visible, panelFrame: frame)
++            #expect(bounds == CGRect(x: 100, y: 245, width: 700, height: 855))
++            let global = CGRect(x: frame.minX + bounds.minX, y: frame.maxY - bounds.maxY,
++                                width: bounds.width, height: bounds.height)
++            #expect(global == frame.intersection(visible))
++            let placement = PanelPlacement()
++            placement.setPanelFrame(frame, visible: visible)
++            #expect(placement.panelSize == frame.size)
++            #expect(placement.cardPlacementBounds == bounds)
++            #expect(PanelPlacement.cardBounds(visible: visible, panelFrame: frame.offsetBy(dx: 3_000, dy: 0)) == .zero)
++        }
++
++        @Test("Clamped first and last rings retain the same tip anchor")
++        func endRings() {
++            let lower: CGFloat = 245
++            let upper: CGFloat = 1_100
++            for length: CGFloat in [80, 300, 855 * 0.75] {
++                for ring in [lower + 3, lower + 100, (lower + upper) / 2, upper - 3] {
++                    let anchor = DetailCardAnchor(ring: ring, length: length, lowerBound: lower,
++                                                  upperBound: upper, panelLength: upper)
++                    #expect(anchor.origin >= lower)
++                    #expect(anchor.origin + length <= upper)
++                    #expect(abs(anchor.origin + anchor.pointer - ring) < 0.001)
++                }
++            }
++        }
++
++        @Test("A side Dock cannot push a free card outside its granted window")
++        func sideDock() {
++            let size = PanelSize.allCases.first { $0.scale == PanelMetrics.scale } ?? .default
++            PanelMetrics.use(PanelSize.default)
++            defer { PanelMetrics.use(size) }
++            for screenX: CGFloat in [0, -1_440] {
++                for left in [false, true] {
++                    let screen = CGRect(x: screenX, y: 0, width: 1_440, height: 900)
++                    let visible = CGRect(x: screenX + (left ? 80 : 0), y: 0, width: 1_360, height: 875)
++                    let placement = PanelPlacement(dock: .floating(.horizontal),
++                        horizontalRatio: left ? 0 : 1, verticalRatio: 0.4)
++                    placement.snapsToEdges = false
++                    let rail = DockLayout.size(for: 1, on: .horizontal, docked: false)
++                    let panel = FloatingPanelController.Layout.size(for: placement.edge, capacity: 1,
++                        docked: false, cardHeight: DetailCardLayout.screenHeightLimit(in: visible))
++                    let layout = placement.layout(in: placement.room(visible: visible, screen: screen),
++                        topEdge: screen.maxY, panel: panel, rail: rail)
++                    placement.setPanelFrame(layout.frame, visible: visible)
++                    let bounds = PanelPlacement.cardBounds(visible: visible, panelFrame: layout.frame)
++                    #expect(bounds.width < DetailCardLayout.width)
++                    let offsets = PanelPlacement.offsets(forRailTopLeft: layout.railOrigin,
++                                                        in: layout.frame, rail: rail)
++                    let ring = offsets.leading + DockLayout.firstRingAlong(docked: false, on: .horizontal)
++                    let anchor = DetailCardAnchor(ring: ring, length: DetailCardLayout.width,
++                        lowerBound: bounds.minX, upperBound: bounds.maxX, panelLength: panel.width)
++                    #expect(anchor.origin >= 0)
++                    #expect(anchor.origin + DetailCardLayout.width <= panel.width)
++                    #expect(abs(anchor.origin + anchor.pointer - ring) < 0.001)
++                }
++            }
++        }
++
++        @Test("A narrow or empty visible intersection still keeps the card inside the panel")
++        func narrowIntersection() {
++            for bounds: (CGFloat, CGFloat) in [(80, 250), (0, 170), (0, 0), (100, 270)] {
++                for ring: CGFloat in [10, 125, 240] {
++                    let anchor = DetailCardAnchor(ring: ring, length: 250,
++                        lowerBound: bounds.0, upperBound: bounds.1, panelLength: 250)
++                    #expect(anchor.origin == 0)
++                    #expect(anchor.origin + anchor.pointer == ring)
++                }
++            }
++        }
++
++        @Test("Rings outside the usable strip still keep their arrow inside the card")
++        func ringOutsideUsableStrip() {
++            for bounds: (CGFloat, CGFloat) in [(80, 400), (0, 320), (0, 0)] {
++                for ring: CGFloat in [10, 125, 390] {
++                    let anchor = DetailCardAnchor(ring: ring, length: 250,
++                        lowerBound: bounds.0, upperBound: bounds.1, panelLength: 400)
++                    #expect(anchor.origin >= 0 && anchor.origin + 250 <= 400)
++                    #expect(anchor.pointer >= 0 && anchor.pointer <= 250)
++                    #expect(anchor.origin + anchor.pointer == ring)
++                }
++            }
++        }
++
++        @Test("Actual tail paths aim at near-corner rings in every direction")
++        func tailTips() throws {
++            let previous = PanelMetrics.usesRoundEnds
++            defer { PanelMetrics.useRoundEnds(previous) }
++            for round in [false, true] {
++                PanelMetrics.useRoundEnds(round)
++                for edge in [PanelEdge.left, .right, .top, .bottom] {
++                    for length: CGFloat in [6, 80, 855 * 0.75] {
++                        let rect = CGRect(origin: .zero, size: edge.isVertical
++                            ? CGSize(width: 270, height: length) : CGSize(width: length, height: 270))
++                        for anchor in [CGFloat(0), 0.3, 3, length - 3, length - 0.3, length] {
++                            let shape = UsageBubbleShape(edge: edge, pointerCenter: anchor,
++                                cornerRadius: 20, pointerWidth: 20, pointerHeight: 40)
++                            var tips: [CGPoint] = []
++                            shape.only(.tail).path(in: rect).cgPath.applyWithBlock { element in
++                                if element.pointee.type == .addCurveToPoint {
++                                    tips.append(element.pointee.points[2])
++                                }
++                            }
++                            let tip = try #require(tips.first)
++                            let expected: CGPoint = switch edge {
++                            case .left: CGPoint(x: 0, y: anchor)
++                            case .right: CGPoint(x: rect.width, y: anchor)
++                            case .top: CGPoint(x: anchor, y: 0)
++                            case .bottom: CGPoint(x: anchor, y: rect.height)
++                            }
++                            #expect(abs(tip.x - expected.x) < 0.001)
++                            #expect(abs(tip.y - expected.y) < 0.001)
++                            let bounds = shape.path(in: rect).boundingRect
++                            #expect(bounds.minX >= -0.001 && bounds.minY >= -0.001)
++                            #expect(bounds.maxX <= rect.maxX + 0.001 && bounds.maxY <= rect.maxY + 0.001)
++                        }
++                    }
++                }
++            }
++        }
++    }
++}
+diff --git a/Tests/PulseTests/DetailCardOverflowTests.swift b/Tests/PulseTests/DetailCardOverflowTests.swift
+new file mode 100644
+index 0000000..912c9dc
+--- /dev/null
++++ b/Tests/PulseTests/DetailCardOverflowTests.swift
+@@ -0,0 +1,232 @@
++import AppKit
++import SwiftUI
++import Testing
++@testable import Pulse
++
++@Suite("Detail card viewport")
++struct DetailCardViewportTests {
++    private func layout(_ limit: CGFloat, summary: CGFloat = 80, details: CGFloat = 300) -> DetailCardViewport {
++        DetailCardViewport(limit: limit, summary: summary, details: details,
++                           spacing: 14, padding: 18, minimumDetailHeight: 34)
++    }
++
++    @Test("Short cards keep their natural height; a long card reserves a details viewport")
++    func naturalAndBounded() {
++        let short = layout(500, details: 30)
++        #expect(short.height == 160)
++        #expect(short.detailHeight == 30)
++        #expect(short.fixesSummary && !short.scrolls)
++        let long = layout(300)
++        #expect(long.height == 300)
++        #expect(long.detailHeight == 170)
++        #expect(long.fixesSummary && long.scrolls)
++        #expect(layout(430).scrolls == false)
++        #expect(layout(429).scrolls)
++        #expect(layout(429).fixesSummary)
++    }
++
++    @Test("A tiny placement scrolls the whole summary rather than stranding details", arguments: [CGFloat(-10), 0, 1, 80, 150])
++    func tiny(limit: CGFloat) {
++        let result = layout(limit)
++        #expect(!result.fixesSummary)
++        #expect(result.scrolls)
++        #expect(result.height == max(limit, 0))
++        #expect(result.detailHeight >= 0)
++    }
++
++    @Test("A title-only card has no extra details gap")
++    func titleOnly() {
++        let result = layout(300, details: 0)
++        #expect(result.height == 116)
++        #expect(result.detailHeight == 0)
++        #expect(!result.scrolls)
++    }
++
++    @Test("Finite screen limits replace the fallback; only vertical pointers consume height")
++    func bodyBudget() {
++        for room: CGFloat? in [nil, .infinity] {
++            #expect(DetailCardViewport.bodyLimit(maxHeight: room, fallbackHeight: 300, pointerHeight: 0) == 300)
++        }
++        #expect(DetailCardViewport.bodyLimit(maxHeight: 300, fallbackHeight: 300, pointerHeight: 0) == 300)
++        #expect(DetailCardViewport.bodyLimit(maxHeight: 900, fallbackHeight: 300, pointerHeight: 0) == 900)
++        #expect(DetailCardViewport.bodyLimit(maxHeight: 300, fallbackHeight: 300, pointerHeight: 20) == 280)
++        #expect(DetailCardViewport.bodyLimit(maxHeight: 900, fallbackHeight: 300, pointerHeight: 20) == 880)
++        #expect(DetailCardViewport.bodyLimit(maxHeight: nil, fallbackHeight: 300, pointerHeight: 20) == 300)
++        #expect(DetailCardViewport.bodyLimit(maxHeight: 10, fallbackHeight: 300, pointerHeight: 20) == 0)
++    }
++}
++
++extension PanelGlobalsSuite {
++    /// Hosted layout and programmatic scrolling are local probes, not evidence
++    /// of wheel/trackpad delivery to the actual non-key accessory panel.
++    @MainActor
++    @Suite("Detail card overflow")
++    struct DetailCardOverflowTests {
++        private func reading(count: Int = 20, slot: String = "overflow-fixture") -> ProviderUsage {
++            let limits = (0..<count).map { index in
++                #"{"id":"quota-\#(index)","label":"Quota \#(index)","usedPercent":\#(index == 0 ? 100 : 33)}"#
++            }.joined(separator: ",")
++            let series = #"[{"t":"2026-11-01T00:00:00Z","v":10},{"t":"2026-11-01T01:00:00Z","v":20}]"#
++            let report = #"{"schemaVersion":1,"limits":[\#(limits)],"balance":{"amount":16,"currency":"USD"},"metrics":[{"id":"first","label":"Latency","value":20,"history":\#(series)},{"id":"second","label":"Rate","value":20,"history":\#(series)},{"id":"third","label":"Requests","value":30},{"id":"last","label":"Last metric","value":40}]}"#
++            return ExtensionReport.reading(from: Data(report.utf8),
++                for: AccountKey(.pulseExtension, slot: slot), now: Date(timeIntervalSince1970: 1_000))
++        }
++
++        @Test("A pinned quota near the end stays in the summary; every other quota stays in source order")
++        func selectedQuota() {
++            let usage = reading()
++            let card = UsageDetailCard(usage: usage, preferredWindowID: "extension.quota-19",
++                                       edge: .right, pointerCenter: 60)
++            #expect(card.summaryWindow?.id == "extension.quota-19")
++            #expect(card.detailWindows.map(\.id) == usage.windows.dropLast().map(\.id))
++            #expect(card.detailWindows.count + 1 == 20)
++            #expect(usage.metrics.map(\.id) == ["first", "second", "third", "last"])
++            #expect(usage.metrics.filter(\.hasTrend).count == 2)
++            #expect(usage.creditBalance != nil)
++            let automatic = UsageDetailCard(usage: usage, edge: .right, pointerCenter: 60)
++            #expect(automatic.summaryWindow?.id == "extension.quota-0")
++            #expect(automatic.detailWindows.last?.id == "extension.quota-19")
++            let missingPin = UsageDetailCard(usage: usage, preferredWindowID: "missing", edge: .left, pointerCenter: 60)
++            #expect(missingPin.summaryWindow == automatic.summaryWindow)
++        }
++
++        @Test("Every size, bar style and forecast/detail budget bounds every edge")
++        func budgets() {
++            let size = PanelSize.allCases.first { $0.scale == PanelMetrics.scale } ?? .default
++            let style = PanelMetrics.usageBarStyle
++            let forecast = PanelMetrics.showsForecast
++            let detailed = PanelMetrics.showsDetailedCard
++            defer {
++                PanelMetrics.use(size)
++                PanelMetrics.use(style)
++                PanelMetrics.showForecast(forecast)
++                PanelMetrics.showDetailedCard(detailed)
++            }
++            for size in PanelSize.allCases {
++                PanelMetrics.use(size)
++                for style in UsageBarStyle.allCases {
++                    PanelMetrics.use(style)
++                    for detailed in [false, true] {
++                        PanelMetrics.showDetailedCard(detailed)
++                        for forecast in [false, true] {
++                            PanelMetrics.showForecast(forecast)
++                            for edge in [PanelEdge.left, .right, .top, .bottom] {
++                                let pointer = edge.isVertical ? 0 : DetailCardLayout.pointerWidth
++                                let limit = DetailCardViewport.bodyLimit(maxHeight: 240,
++                                    fallbackHeight: DetailCardLayout.maximumHeight, pointerHeight: pointer)
++                                let layout = DetailCardViewport(limit: limit,
++                                    summary: DetailCardLayout.headerHeight + DetailCardLayout.contentSpacing + DetailCardLayout.rowHeight,
++                                    details: DetailCardLayout.height(forWindows: 20),
++                                    spacing: DetailCardLayout.contentSpacing, padding: DetailCardLayout.padding,
++                                    minimumDetailHeight: DetailCardLayout.rowHeight)
++                                #expect(layout.height + pointer <= 240)
++                                #expect(layout.height <= DetailCardLayout.maximumHeight)
++                                #expect(layout.scrolls)
++                                #expect(layout.detailHeight >= 0)
++                            }
++                        }
++                    }
++                }
++            }
++        }
++
++        private func settle(_ host: NSView) async throws {
++            for _ in 0..<6 {
++                host.layoutSubtreeIfNeeded()
++                try await Task.sleep(for: .milliseconds(20))
++            }
++        }
++
++        private func scrollView(in view: NSView) -> NSScrollView? {
++            if let scroll = view as? NSScrollView { return scroll }
++            return view.subviews.lazy.compactMap { scrollView(in: $0) }.first
++        }
++
++        private func capture(_ host: NSView, to url: URL) throws {
++            host.display()
++            let rep = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
++            host.cacheDisplay(in: host.bounds, to: rep)
++            let png = try #require(rep.representation(using: .png, properties: [:]))
++            try png.write(to: url)
++        }
++
++        @Test("A long hosted card fits on every edge even without a restrictive screen limit",
++               arguments: [PanelEdge.left, .right, .top, .bottom])
++        func hosted(edge: PanelEdge) async throws {
++            let usage = reading()
++            for room: CGFloat? in [nil, DetailCardLayout.maximumHeight, DetailCardLayout.maximumHeight * 2] {
++                let card = UsageDetailCard(usage: usage, preferredWindowID: "extension.quota-19",
++                    edge: edge, pointerCenter: 60, maxHeight: room)
++                let host = NSHostingView(rootView: card.fixedSize().environment(\.colorScheme, .dark))
++                host.setFrameSize(CGSize(width: 500, height: 1_400))
++                let window = NSWindow(contentRect: host.frame, styleMask: .borderless,
++                                      backing: .buffered, defer: false)
++                window.isReleasedWhenClosed = false
++                window.contentView = host
++                defer { window.contentView = nil; window.close() }
++                try await settle(host)
++                let pointer = edge.isVertical ? 0 : DetailCardLayout.pointerWidth
++                let limit = room ?? (DetailCardLayout.maximumHeight + pointer)
++                #expect(host.fittingSize.height <= limit + 0.5)
++                if let room, room > DetailCardLayout.maximumHeight {
++                    #expect(host.fittingSize.height > DetailCardLayout.maximumHeight + pointer)
++                }
++                let scroll = try #require(scrollView(in: host))
++                let document = try #require(scroll.documentView)
++                #expect(document.bounds.height > scroll.contentView.bounds.height)
++                let captureDirectory = edge == .right && room == nil
++                    ? ProcessInfo.processInfo.environment["PULSE_DETAIL_CARD_CAPTURE_DIR"].map { URL(fileURLWithPath: $0) } : nil
++                if let captureDirectory {
++                    try FileManager.default.createDirectory(at: captureDirectory, withIntermediateDirectories: true)
++                    window.setContentSize(host.fittingSize)
++                    window.isOpaque = false
++                    window.backgroundColor = .clear
++                    try await settle(host)
++                    try capture(host, to: captureDirectory.appendingPathComponent("detail-top.png"))
++                }
++                let firstY = document.isFlipped ? document.bounds.minY
++                    : max(document.bounds.maxY - scroll.contentView.bounds.height, document.bounds.minY)
++                #expect(abs(scroll.contentView.bounds.minY - firstY) < 1)
++                let lastY = document.isFlipped
++                    ? max(document.bounds.maxY - scroll.contentView.bounds.height, document.bounds.minY)
++                    : document.bounds.minY
++                let last = scroll.contentView.constrainBoundsRect(CGRect(
++                    x: 0, y: lastY, width: scroll.contentView.bounds.width,
++                    height: scroll.contentView.bounds.height))
++                scroll.contentView.scroll(to: last.origin)
++                scroll.reflectScrolledClipView(scroll.contentView)
++                #expect(abs(scroll.contentView.bounds.minY - lastY) < 1)
++                if let captureDirectory {
++                    try await settle(host)
++                    try capture(host, to: captureDirectory.appendingPathComponent("detail-bottom.png"))
++                }
++            }
++        }
++
++        @Test("Switching a long reading to a balance-only reading and back recovers height")
++        func longShortLong() async throws {
++            let long = reading()
++            let short = ExtensionReport.reading(from: Data(#"{"schemaVersion":1,"balance":{"amount":2,"currency":"USD"}}"#.utf8),
++                for: long.account, now: Date(timeIntervalSince1970: 1_000))
++            func card(_ usage: ProviderUsage) -> some View {
++                UsageDetailCard(usage: usage, edge: .right, pointerCenter: 60).fixedSize()
++            }
++            let host = NSHostingView(rootView: card(long))
++            host.setFrameSize(CGSize(width: 500, height: 1_400))
++            let window = NSWindow(contentRect: host.frame, styleMask: .borderless,
++                                  backing: .buffered, defer: false)
++            window.isReleasedWhenClosed = false
++            window.contentView = host
++            defer { window.contentView = nil; window.close() }
++            try await settle(host)
++            let tall = host.fittingSize.height
++            host.rootView = card(short)
++            try await settle(host)
++            #expect(host.fittingSize.height < tall)
++            host.rootView = card(long)
++            try await settle(host)
++            #expect(abs(host.fittingSize.height - tall) < 1)
++            #expect(host.fittingSize.height <= DetailCardLayout.maximumHeight + 0.5)
++        }
++    }
++}

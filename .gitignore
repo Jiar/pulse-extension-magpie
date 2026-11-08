@@ -1,0 +1,30 @@
+# Python and editor caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+.coverage
+htmlcov/
+.pytest_cache/
+.claude/
+.vscode/
+.idea/
+
+# Local configuration, captures, exports and build products
+/config.json
+.env
+.env.*
+*.log
+*.zip
+*.dmg
+*.app/
+.local/
+build.noindex/
+/VERIFICATION.md
+
+# Historical machine-specific Pulse build/install helpers remain local.
+/native-pulse/*
+!/native-pulse/README.md
+!/native-pulse/detail-card-overflow.patch
+!/native-pulse/LICENSE-Pulse.txt

@@ -1,0 +1,15 @@
+{
+  "kind": "Synthetic illustrations, not running screenshots or native Pulse component renders",
+  "data": "Wholly fictional fixture; no screen capture, live service, user config, account, or credential reads",
+  "fixtureSHA256": "8afcb835fed51353b1739ab0fc2160917e181946220b2927b7b6c97100eae749",
+  "magpieSourceSHA256": "3f9ffb903576be95eab10829fd9ab04d9822c7f8c8cc9332c65d4f95f5b5d05e",
+  "configureSourceSHA256": "20b5ab4807eda630eff101c1a1faf28a851b498f36e3521b55648b39af7eeb4e",
+  "reportSHA256": "6ed52276715f016cbe4a14e2c61ceff1d41bae628a4b02cab4cd3c9e1e36b784",
+  "cli": "Unedited configure.print_providers and configure.print_details output, evaluated at fixture.now",
+  "artwork": "Typography and simple AppKit geometry; no third-party logos, icon assets, or fonts",
+  "images": {
+    "magpie-usage.png": "d50d74aa7efc9d46b2b44b8e5d5534293cba1817bff3d702b4815c3680ec9e84",
+    "provider-settings.png": "7a7d93de5e24425f332a6971db3621d49a0f7a40bc7cd12b4978f36eab18d0a4"
+  },
+  "reproducibility": "Fixed fixture, values, UTC timestamps, and explicit colors. AppKit text rasterization may differ by macOS/Xcode/font version."
+}

@@ -1,0 +1,12 @@
+
+Magpie Allowances 来源
+
+1. [显示] Codex (codex) — 2 个账号
+      cedar-demo
+      lumen-demo
+2. [显示] Cursor (cursor) — 1 个账号
+      orbit-demo
+3. [隐藏] Qoder (qoder) — 1 个账号
+      fern-demo
+
+新增服务默认：隐藏
