@@ -11,16 +11,16 @@
 
 一个 **Magpie Usage** 入口集中展示各服务的额度，外层圆环可固定为**服务等权平均用量**，展开后查看各账号的额度窗口与重置时间。
 
-<img src="docs/images/pulse-magpie-redacted.png" alt="脱敏后的定制 Pulse 实机效果：Magpie Usage 汇总五个服务的额度，左侧卡片显示平均用量与各账号窗口，右侧圆环显示 35% 平均用量。所有账号标签均为虚构名称。" width="480" />
+<img src="docs/images/magpie-product-overview.png" alt="模拟产品效果：浅灰背景上，Magpie Usage 卡片展示 Codex、Cursor、OpenCode Go、Qoder、WorkBuddy 五个服务的额度，摘要与右侧圆环均显示 36% 等权平均用量。所有账号、额度和重置时间均为虚构。" width="900" />
 
-*基于用户提供的实机截图制作，账号与邮箱已完整覆盖并替换为虚构名称，桌面背景已移除。百分比和重置时间保留截图当时的读数，不代表当前用量。*
+*使用 5 个服务的模拟数据制作的产品效果示意，非 Pulse 实机截图。账号、额度和重置时间均为虚构，摘要与圆环的等权平均用量均为 36%。*
 
-截图中的 Magpie 图标与卡片布局来自本地定制 Pulse；扩展本身不提供自定义图标或控制原生布局的能力，详见 [Pulse 能力边界](#pulse-能力边界)。图片来源和脱敏范围见 [图片说明](docs/images/README.md)。
+示意图参考本地定制 Pulse 的 Magpie 图标与卡片布局；扩展本身不提供自定义图标或控制原生布局的能力，详见 [Pulse 能力边界](#pulse-能力边界)。模拟数据与图片说明见 [图片说明](docs/images/README.md)。
 
 <details>
 <summary>查看合成示意图：统一额度与服务显示开关</summary>
 
-以下为**合成示意图，并非 Pulse 实机截图**。图片使用仓库中的虚构账号、额度和时间生成，与上方截图的读数无关。
+以下示意图同样使用虚构账号、额度和时间，展示统一额度与服务显示开关；示例数据与上方产品图不同。
 
 ![Magpie Usage：统一入口、平均用量与各账号额度](docs/images/magpie-usage.png)
 

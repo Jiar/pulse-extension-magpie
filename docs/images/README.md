@@ -1,21 +1,30 @@
 # Product images
 
-The main README uses a redacted native Pulse screenshot. Two separate synthetic illustrations explain the extension's report and provider switches.
+The main README uses a five-provider product illustration with wholly fictional data. Two additional synthetic illustrations explain the extension's report and provider switches.
 
-## Redacted Pulse screenshot
+## Product overview
 
-[pulse-magpie-redacted.png](pulse-magpie-redacted.png) is a **684 × 1466** PNG derived from a user-supplied screenshot of a locally customized Pulse application. It shows the Magpie Usage card, individual quota windows, reset times, and the outer average-usage ring.
+[magpie-product-overview.png](magpie-product-overview.png) is a **1800 × 1440** product illustration, not a native Pulse screenshot. A neutral background, generous margins, and soft shadows frame a compact quota card and its outer average-usage ring. It contains exactly five service rows, plus their average in the summary.
 
-- All seven account-bearing label rows were fully covered with opaque black pixels, then rewritten with fictional names: `cedar-demo`, `lumen-demo`, `orbit-demo`, `fern-demo`, and `birch-demo`. Original emails and account names are not retained beneath a blur, overlay, or editable layer.
-- The desktop wallpaper was replaced with a plain background. A footer identifies the image as redacted and the account names as fictional.
-- The native card, meters, percentages, reset times, and embedded icons retain the supplied screenshot's appearance. Usage readings are historical screenshot values, not current data or values generated from the synthetic fixture below.
-- The result was flattened into a fresh RGB PNG with no text, EXIF, source paths, embedded original, or thumbnail metadata. Only the redacted PNG is included in the repository; the original upload and local editing helper are not published.
+All account names, quota readings, and reset dates are fictional. The following table is the text equivalent of the five rows; the fixed fixture clock is **2026-11-08 12:00 UTC**.
 
-This is a static screenshot, not a recording or an interaction test. The custom Magpie icon and native layout belong to the locally customized Pulse application; installing the Python extension alone does not provide them. See [Pulse capability boundaries](../../README.md#pulse-能力边界) and [the optional native changes](../../native-pulse/README.md).
+| Service | Fictional account | Quota window | Used | Resets at (UTC) |
+| --- | --- | --- | --- | --- |
+| Codex | cedar-demo | 7 days | 18% | 2026-11-15 12:00 |
+| Cursor | orbit-demo | Monthly | 32% | 2026-12-01 00:00 |
+| OpenCode Go | lumen-demo | 5 hours | 44% | 2026-11-08 15:00 |
+| Qoder | fern-demo | Monthly | 37% | 2026-12-01 00:00 |
+| WorkBuddy | birch-demo | Monthly | 49% | 2026-11-30 00:00 |
 
-The Magpie marks appear only inside the screenshot to identify the displayed application. No standalone Magpie icon or installable icon resource is provided, and the repository's Apache-2.0 license grants no rights to third-party marks or artwork.
+Each service has one account with one quota window, so the equal-provider average is **(18 + 32 + 44 + 37 + 49) / 5 = 36%**. The production `magpie.aggregate_allowances` function computed this value from the synthetic rows, with live fetch and config reads disabled. The summary and outer ring both use that same computed result.
 
-## Synthetic illustrations
+The artwork was drawn offline with Pillow and macOS system fonts. No installed application was launched, desktop captured, live service contacted, or real account configuration read. The flattened RGB PNG contains only image chunks, with no text, EXIF, source paths, embedded original, or thumbnail metadata. No font binaries are distributed. The `render-demo.py` command below generates only the two additional illustrations, not this product overview.
+
+The depicted Magpie icon and card layout refer to a locally customized Pulse application; installing the Python extension alone does not provide them. This illustration does not establish exact native rendering or interaction behavior. See [Pulse capability boundaries](../../README.md#pulse-能力边界) and [the optional native changes](../../native-pulse/README.md).
+
+The Magpie logo is embedded only to identify the displayed integration. No standalone Magpie icon or installable icon resource is provided, and the repository's Apache-2.0 license grants no rights to third-party marks or artwork.
+
+## Additional synthetic illustrations
 
 The following two images are **synthetic illustrations (非实机截图)**, not screenshots of Pulse, Magpie, or native SwiftUI components. The artwork is drawn directly into AppKit bitmaps. No application or window is opened and no screen is captured by their renderer.
 
