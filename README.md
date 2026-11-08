@@ -7,13 +7,26 @@
 
 扩展显示名为 **Magpie**；Pulse 的用量卡片标题为 **Magpie Usage**。
 
-## 展示
+## 产品效果
 
-以下为**合成示意图，并非 Pulse 实机截图**。图片使用仓库中的虚构账号、额度和时间生成，与真实账号无关。生成方式与画面适用范围见 [图片说明](docs/images/README.md)。
+一个 **Magpie Usage** 入口集中展示各服务的额度，外层圆环可固定为**服务等权平均用量**，展开后查看各账号的额度窗口与重置时间。
+
+<img src="docs/images/pulse-magpie-redacted.png" alt="脱敏后的定制 Pulse 实机效果：Magpie Usage 汇总五个服务的额度，左侧卡片显示平均用量与各账号窗口，右侧圆环显示 35% 平均用量。所有账号标签均为虚构名称。" width="480" />
+
+*基于用户提供的实机截图制作，账号与邮箱已完整覆盖并替换为虚构名称，桌面背景已移除。百分比和重置时间保留截图当时的读数，不代表当前用量。*
+
+截图中的 Magpie 图标与卡片布局来自本地定制 Pulse；扩展本身不提供自定义图标或控制原生布局的能力，详见 [Pulse 能力边界](#pulse-能力边界)。图片来源和脱敏范围见 [图片说明](docs/images/README.md)。
+
+<details>
+<summary>查看合成示意图：统一额度与服务显示开关</summary>
+
+以下为**合成示意图，并非 Pulse 实机截图**。图片使用仓库中的虚构账号、额度和时间生成，与上方截图的读数无关。
 
 ![Magpie Usage：统一入口、平均用量与各账号额度](docs/images/magpie-usage.png)
 
 ![Magpie 服务显示开关与新增来源策略](docs/images/provider-settings.png)
+
+</details>
 
 ## 环境要求
 
@@ -162,7 +175,7 @@ Magpie 未运行时返回 `unreachable`；全部来源隐藏或没有有效额�
 | 自定义 Magpie 图标 | 扩展协议无图标字段，使用 Pulse 的通用扩展图标 |
 | 卡片高度、滚动和箭头位置 | 由 Pulse 原生布局决定 |
 
-大量额度的卡片可能受所用 Pulse 版本的原生布局限制。可用 `--details` 查看完整数据；可选的通用“固定摘要＋列表滚动”修复见 [native-pulse](native-pulse/README.md)。安装 Python 扩展不会自动安装该修复。本仓库不分发定制 Pulse 应用或 Magpie 官方 logo。
+大量额度的卡片可能受所用 Pulse 版本的原生布局限制。可用 `--details` 查看完整数据；可选的通用“固定摘要＋列表滚动”修复见 [native-pulse](native-pulse/README.md)。安装 Python 扩展不会自动安装该修复。本仓库不附带定制 Pulse 应用或可供安装的 Magpie 官方图标资源；效果图中的图标仅用于展示本地定制界面。
 
 ## 隐私与安全
 
