@@ -17,5 +17,12 @@ viewport, placement and scrolling behavior, with associated tests and documents.
 Modifications: Copyright 2026 Jiar and contributors, Apache-2.0.
 Source: https://github.com/Jiar/Pulse/commit/cae542ec79748e752f9d5eb0b7487556b0413495
 Demonstration images use fictional data. Their rendering method and provenance
-are documented in docs/images/README.md. No Magpie logo or third-party provider
-artwork is distributed.
+are documented in docs/images/README.md.
+
+Magpie artwork
+The Magpie logo in magpie-icon.png and the product overview identifies the
+Magpie integration. The installable PNG was resized and re-encoded from the
+Magpie application icon, with embedded metadata removed. Rights to this
+third-party artwork and mark remain with their respective owners; the project's
+Apache-2.0 license does not grant rights to that artwork or any trademark.
+No third-party provider logo files or font binaries are included.

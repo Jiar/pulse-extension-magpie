@@ -15,7 +15,7 @@
 
 *使用 5 个服务的模拟数据制作的产品效果示意，非 Pulse 实机截图。账号、额度和重置时间均为虚构，摘要与圆环的等权平均用量均为 36%。*
 
-示意图参考本地定制 Pulse 的 Magpie 图标与卡片布局；扩展本身不提供自定义图标或控制原生布局的能力，详见 [Pulse 能力边界](#pulse-能力边界)。模拟数据与图片说明见 [图片说明](docs/images/README.md)。
+示意图参考定制 Pulse 的卡片布局。本扩展随安装分发 Magpie 图标；显示图标需要 Pulse 支持清单中的可选 `icon` 字段，详见 [Pulse 能力边界](#pulse-能力边界)。模拟数据与图片说明见 [图片说明](docs/images/README.md)。
 
 <details>
 <summary>查看合成示意图：统一额度与服务显示开关</summary>
@@ -30,7 +30,7 @@
 
 ## 环境要求
 
-- macOS，安装支持 [schemaVersion 1 扩展](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md) 的 Pulse。
+- macOS，安装支持 [schemaVersion 1 扩展](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md) 的 Pulse。显示 Magpie 图标还需使用带[扩展图标支持](https://github.com/Jiar/Pulse/tree/feat/extension-icons)的 Pulse 构建。
 - Python **3.9 或更新版本**，`python3` 可从 Pulse 的执行环境中找到；无需 pip 依赖。
 - Magpie 正在运行，其本地接口可用：`http://127.0.0.1:3425/v1/magpie/quotas`。
 
@@ -70,11 +70,14 @@ python3 -B install.py
   config.json
   configure.py
   manage.command
+  magpie-icon.png
 ```
 
 在 Pulse 的 **Settings → Manage extensions → Look again** 中发现 **Magpie**，开启 **Show in panel**。然后按下一节将圆环固定到平均用量。
 
-更新代码后重新运行安装命令即可；已有显示开关、新来源默认策略、自定义 endpoint 和时效设置会保留。新增服务或账号无需重装。修改扩展名称或清单后需要重新扫描，必要时重启 Pulse。
+更新代码后重新运行安装命令即可；已有显示开关、新来源默认策略、自定义 endpoint 和时效设置会保留。新增服务或账号无需重装。修改扩展名称、清单或图标后执行 **Look again**。
+
+**显示 Magpie 图标需要同时更新扩展和 Pulse。** 安装器会复制 `magpie-icon.png`，并在清单中写入 `"icon": "magpie-icon.png"`。支持该字段的 Pulse 按扩展账号显示图标；原版或旧版 Pulse 会忽略它，继续显示通用拼图图标，用量读取不受影响。此前发布的 `custom-1.12.7-scroll.1` 只有滚动修复，不包含图标支持；单独重装扩展或重启旧版 Pulse 无法添加这项能力。配套 Pulse 源码与构建说明见 [native-pulse](native-pulse/README.md#扩展图标支持)。
 
 旧版“每账号一个扩展”的目录，经核对为本项目所有后会迁移到项目 `.local/legacy-extensions-<时间>/` 中备份；其他扩展不受影响。`--keep-legacy` 可保留旧目录。
 
@@ -172,10 +175,10 @@ Magpie 未运行时返回 `unreachable`；全部来源隐藏或没有有效额�
 | 单个扩展入口、多来源和平均值 | 本扩展直接支持 |
 | 服务开关、完整详情 | 本地 JSON 与终端命令 |
 | 在 Pulse 设置中嵌入自定义界面 | 扩展协议不支持 |
-| 自定义 Magpie 图标 | 扩展协议无图标字段，使用 Pulse 的通用扩展图标 |
+| 自定义 Magpie 图标 | 安装器分发 PNG 并声明 `icon`；需支持该字段的 Pulse 构建，旧版保持通用图标 |
 | 卡片高度、滚动和箭头位置 | 由 Pulse 原生布局决定 |
 
-大量额度的卡片可能受所用 Pulse 版本的原生布局限制。可用 `--details` 查看完整数据；可选的通用“固定摘要＋列表滚动”修复见 [native-pulse](native-pulse/README.md)。安装 Python 扩展不会自动安装该修复。本仓库不附带定制 Pulse 应用或可供安装的 Magpie 官方图标资源；效果图中的图标仅用于展示本地定制界面。
+大量额度的卡片可能受所用 Pulse 版本的原生布局限制。可用 `--details` 查看完整数据；可选的通用“固定摘要＋列表滚动”修复与扩展图标支持见 [native-pulse](native-pulse/README.md)。安装 Python 扩展不会自动更新 Pulse。本仓库提供扩展使用的 PNG，Pulse 源码中的图标加载能力不绑定特定扩展；图标资源的第三方权利说明见 [NOTICE](NOTICE)。
 
 ## 隐私与安全
 
@@ -201,4 +204,4 @@ python3 -B -m unittest discover -v
 
 本项目采用 [Apache License 2.0](LICENSE)，Copyright 2026 Jiar and contributors。
 
-感谢 [Pulse](https://github.com/qunqin24/Pulse) 提供扩展协议与原生界面，以及 Magpie 提供本地额度来源。附带的 Pulse 补丁保留上游 Apache-2.0 许可和署名，详情见 [NOTICE](NOTICE) 与 [上游许可证](native-pulse/LICENSE-Pulse.txt)。产品名和第三方商标的权利归各自所有者，项目许可不授予其商标权。本项目为独立社区集成。
+感谢 [Pulse](https://github.com/qunqin24/Pulse) 提供扩展协议与原生界面，以及 Magpie 提供本地额度来源。附带的 Pulse 补丁保留上游 Apache-2.0 许可和署名，详情见 [NOTICE](NOTICE) 与 [上游许可证](native-pulse/LICENSE-Pulse.txt)。Magpie 图标及第三方商标的权利归各自所有者，项目的 Apache-2.0 许可不授予第三方图像或商标权利。本项目为独立社区集成。

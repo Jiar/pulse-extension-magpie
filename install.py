@@ -16,7 +16,8 @@ import magpie
 MANAGED_BY = "pulse-extension-magpie"
 AGGREGATE_ID = "magpie-allowances"
 DEFAULT_DESTINATION = Path.home() / "Library/Application Support/Pulse/Extensions"
-FILES = ("magpie.py", "run", "configure.py", "manage.command")
+ICON_FILE = "magpie-icon.png"
+FILES = ("magpie.py", "run", "configure.py", "manage.command", ICON_FILE)
 
 
 def existing_config(target):
@@ -60,9 +61,9 @@ def install_account(row, destination, endpoint, max_age, dry_run=False):
         config.setdefault("maxAgeSeconds", magpie.DEFAULT_MAX_AGE)
     magpie.validate_config(config)
     magpie.validate_endpoint(endpoint)
-    manifest = {"schemaVersion": 1, "id": magpie.extension_id(row), "name": magpie.display_name(row), "executable": "run", "timeoutSeconds": 15}
+    manifest = {"schemaVersion": 1, "id": magpie.extension_id(row), "name": magpie.display_name(row), "executable": "run", "timeoutSeconds": 15, "icon": ICON_FILE}
     if not dry_run:
-        publish(target, manifest, config, ("magpie.py", "run"))
+        publish(target, manifest, config, ("magpie.py", "run", ICON_FILE))
     return manifest
 
 
@@ -81,7 +82,7 @@ def install_aggregate(rows, destination, endpoint, max_age=None, dry_run=False):
         config.setdefault("maxAgeSeconds", magpie.DEFAULT_MAX_AGE)
     magpie.validate_config(config)
     magpie.validate_endpoint(endpoint)
-    manifest = {"schemaVersion": 1, "id": AGGREGATE_ID, "name": "Magpie", "executable": "run", "timeoutSeconds": 15}
+    manifest = {"schemaVersion": 1, "id": AGGREGATE_ID, "name": "Magpie", "executable": "run", "timeoutSeconds": 15, "icon": ICON_FILE}
     if not dry_run:
         publish(target, manifest, config, FILES)
     return manifest
@@ -138,6 +139,7 @@ def main():
             if archived:
                 print("%s %d legacy extensions to %s" % ("Would move" if args.dry_run else "Moved", len(archived), backup))
         print("Settings: %s" % (args.destination / AGGREGATE_ID / "manage.command"))
+        print("Icon: %s (requires Pulse with manifest icon support; older builds use the generic icon)" % ICON_FILE)
         if not args.dry_run:
             print("Pulse → Manage extensions → Look again → Magpie → Show in panel")
     except (magpie.SourceError, OSError, ValueError, KeyError) as error:

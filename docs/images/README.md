@@ -20,9 +20,9 @@ Each service has one account with one quota window, so the equal-provider averag
 
 The artwork was drawn offline with Pillow and macOS system fonts. No installed application was launched, desktop captured, live service contacted, or real account configuration read. The flattened RGB PNG contains only image chunks, with no text, EXIF, source paths, embedded original, or thumbnail metadata. No font binaries are distributed. The `render-demo.py` command below generates only the two additional illustrations, not this product overview.
 
-The depicted Magpie icon and card layout refer to a locally customized Pulse application; installing the Python extension alone does not provide them. This illustration does not establish exact native rendering or interaction behavior. See [Pulse capability boundaries](../../README.md#pulse-能力边界) and [the optional native changes](../../native-pulse/README.md).
+The depicted card layout requires the native Pulse scrolling changes. The extension now installs a Magpie icon, but displaying it also requires Pulse's optional manifest `icon` support. Installing the Python extension alone does not update Pulse. This illustration does not establish exact native rendering or interaction behavior. See [Pulse capability boundaries](../../README.md#pulse-能力边界) and [the optional native changes](../../native-pulse/README.md).
 
-The Magpie logo is embedded only to identify the displayed integration. No standalone Magpie icon or installable icon resource is provided, and the repository's Apache-2.0 license grants no rights to third-party marks or artwork.
+The Magpie logo identifies the displayed integration. The repository also provides [magpie-icon.png](../../magpie-icon.png), a 256 × 256 PNG installed alongside the extension and declared by its manifest's optional `icon` field. It was resized and re-encoded from the Magpie application icon without retaining metadata. Pulse must support that field to draw it. Rights to the third-party artwork and mark remain with their owners; the repository's Apache-2.0 license grants no rights to that artwork or any trademark. See [NOTICE](../../NOTICE).
 
 ## Additional synthetic illustrations
 

@@ -116,6 +116,46 @@ class InstallationBoundaryTests(unittest.TestCase):
         manifest = install.install_aggregate([], Path("unused"), magpie.DEFAULT_ENDPOINT, dry_run=True)
         self.assertEqual(manifest["name"], "Magpie")
         self.assertEqual(manifest["id"], "magpie-allowances")
+        self.assertEqual(manifest["icon"], install.ICON_FILE)
+
+    def test_fresh_install_includes_declared_icon_without_local_app_resources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "Extensions"
+            manifest = install.install_aggregate([account()], destination, magpie.DEFAULT_ENDPOINT)
+            self.assertEqual([path.name for path in destination.iterdir()], [install.AGGREGATE_ID])
+            target = destination / install.AGGREGATE_ID
+            installed = json.loads((target / "pulse-extension.json").read_text())
+            self.assertEqual(installed, manifest)
+            icon = target / installed["icon"]
+            source = Path(install.__file__).resolve().with_name(install.ICON_FILE)
+            self.assertEqual(icon.read_bytes(), source.read_bytes())
+            self.assertTrue(icon.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"))
+            self.assertEqual(icon.stat().st_mode & 0o777, 0o600)
+
+    def test_reinstall_updates_icon_and_keeps_existing_provider_preferences(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory)
+            row = account()
+            install.install_aggregate([row], destination, magpie.DEFAULT_ENDPOINT)
+            target = destination / install.AGGREGATE_ID
+            config_path = target / "config.json"
+            config = json.loads(config_path.read_text())
+            config["providers"][row["provider"]] = False
+            config["showNewProviders"] = False
+            config_path.write_text(json.dumps(config))
+            manifest_path = target / "pulse-extension.json"
+            previous = json.loads(manifest_path.read_text())
+            previous.pop("icon")
+            manifest_path.write_text(json.dumps(previous))
+            (target / install.ICON_FILE).write_bytes(b"outdated icon")
+
+            install.install_aggregate([row], destination, magpie.DEFAULT_ENDPOINT)
+            updated = json.loads(manifest_path.read_text())
+            self.assertEqual(updated["id"], previous["id"])
+            self.assertEqual(updated["icon"], install.ICON_FILE)
+            self.assertEqual(json.loads(config_path.read_text()), config)
+            source = Path(install.__file__).resolve().with_name(install.ICON_FILE)
+            self.assertEqual((target / updated["icon"]).read_bytes(), source.read_bytes())
 
 
 if __name__ == "__main__":
