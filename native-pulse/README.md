@@ -42,13 +42,17 @@ git apply /path/to/pulse-extension-magpie/native-pulse/detail-card-overflow.patc
 
 ## 扩展图标支持
 
-[Jiar/Pulse 的 feat/extension-icons 分支](https://github.com/Jiar/Pulse/tree/feat/extension-icons) 在上述滚动修复基础上，增加 schemaVersion 1 清单的可选 `icon` 字段。它是所有扩展通用的能力，不在 Pulse 内硬编码 Magpie 名称或图标。字段格式、路径与图片大小限制见该分支的 [Docs/extensions.md](https://github.com/Jiar/Pulse/blob/feat/extension-icons/Docs/extensions.md#optional-icon)。
+[Jiar/Pulse 的 feat/extension-magpie 分支](https://github.com/Jiar/Pulse/tree/feat/extension-magpie) 在上述滚动修复基础上，增加 schemaVersion 1 清单的可选 `icon` 字段。它是所有扩展通用的能力，不在 Pulse 内硬编码 Magpie 名称或图标。字段格式、路径与图片大小限制见该分支的 [Docs/extensions.md](https://github.com/Jiar/Pulse/blob/feat/extension-magpie/Docs/extensions.md#optional-icon)。
 
 扩展安装目录现在包含 `magpie-icon.png`，清单声明 `"icon": "magpie-icon.png"`。Pulse 从该扩展目录读取 PNG，在圆环、用量卡片标题、设置列表和菜单中按原色显示。无效或缺失图标回退为通用拼图图标，不影响用量。更换图片后执行 **Look again** 即可更新；选择机器人时圆环仍优先显示机器人。
 
-**此前发布的 [custom-1.12.7-scroll.1](https://github.com/Jiar/Pulse/releases/tag/custom-1.12.7-scroll.1) 和这里附带的滚动补丁不包含图标支持。** 要在新电脑显示 Magpie 图标，需要使用 `feat/extension-icons` 的 Pulse 构建，并重新运行本扩展安装器。仅更新扩展、重新扫描或重启旧版 Pulse 不会添加原生图标能力。
+可从 [custom-1.12.7-magpie.1 Release](https://github.com/Jiar/Pulse/releases/tag/custom-1.12.7-magpie.1) 下载包含两项修复的 **Pulse-1.12.7-magpie-universal.dmg** 或 ZIP，支持 Apple Silicon 和 Intel，要求 macOS 14 或更新版本。源码固定为 [316ad16](https://github.com/Jiar/Pulse/commit/316ad16ce04b9db28d65404d03d7fe9f35559134)，后续集成调整以 `feat/extension-magpie` 分支为基础。
 
-源码构建方法见 Pulse 的 [Docs/build-from-source.md](https://github.com/Jiar/Pulse/blob/feat/extension-icons/Docs/build-from-source.md)。源码构建的应用不等同于官方签名和公证发行版；官方更新可能覆盖这些改动。
+安装该 Pulse 构建后，重新运行本扩展安装器，再执行 **Look again**。安装包提供通用原生能力，Magpie 图标由本扩展安装目录提供。**此前的 [custom-1.12.7-scroll.1](https://github.com/Jiar/Pulse/releases/tag/custom-1.12.7-scroll.1) 和这里附带的滚动补丁不包含图标支持。** 仅更新扩展、重新扫描或重启旧版 Pulse 不会添加原生图标能力。
+
+源码构建方法见 Pulse 的 [Docs/build-from-source.md](https://github.com/Jiar/Pulse/blob/feat/extension-magpie/Docs/build-from-source.md)。此社区构建采用 ad-hoc 签名，未经 Apple 公证；首次启动按 Release 页的 macOS 提示操作。应用内 Sparkle 更新源沿用上游设置，安装上游更新可能覆盖本分支的改动。本发布不写入 Sparkle 更新源。
+
+发布包的 `BUILD-INFO.json` 记录源码、工具链、测试数量、双架构与 SDK 标记、签名及 ZIP／DMG 验证结果；`SHA256SUMS.txt` 提供资产校验和。
 
 ## 许可
 

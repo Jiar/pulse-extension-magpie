@@ -30,7 +30,7 @@
 
 ## 环境要求
 
-- macOS，安装支持 [schemaVersion 1 扩展](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md) 的 Pulse。显示 Magpie 图标还需使用带[扩展图标支持](https://github.com/Jiar/Pulse/tree/feat/extension-icons)的 Pulse 构建。
+- macOS，安装支持 [schemaVersion 1 扩展](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md) 的 Pulse。显示 Magpie 图标还需使用带[扩展图标支持](https://github.com/Jiar/Pulse/tree/feat/extension-magpie)的 Pulse 构建。
 - Python **3.9 或更新版本**，`python3` 可从 Pulse 的执行环境中找到；无需 pip 依赖。
 - Magpie 正在运行，其本地接口可用：`http://127.0.0.1:3425/v1/magpie/quotas`。
 
@@ -77,7 +77,9 @@ python3 -B install.py
 
 更新代码后重新运行安装命令即可；已有显示开关、新来源默认策略、自定义 endpoint 和时效设置会保留。新增服务或账号无需重装。修改扩展名称、清单或图标后执行 **Look again**。
 
-**显示 Magpie 图标需要同时更新扩展和 Pulse。** 安装器会复制 `magpie-icon.png`，并在清单中写入 `"icon": "magpie-icon.png"`。支持该字段的 Pulse 按扩展账号显示图标；原版或旧版 Pulse 会忽略它，继续显示通用拼图图标，用量读取不受影响。此前发布的 `custom-1.12.7-scroll.1` 只有滚动修复，不包含图标支持；单独重装扩展或重启旧版 Pulse 无法添加这项能力。配套 Pulse 源码与构建说明见 [native-pulse](native-pulse/README.md#扩展图标支持)。
+**显示 Magpie 图标需要同时更新扩展和 Pulse。** 可从 [Pulse Magpie 集成版 Release](https://github.com/Jiar/Pulse/releases/tag/custom-1.12.7-magpie.1) 下载通用 DMG 或 ZIP，安装后重新运行本扩展安装器，再执行 **Look again**。安装器会复制 `magpie-icon.png`，并在清单中写入 `"icon": "magpie-icon.png"`。
+
+该 Pulse 构建同时包含扩展图标支持和固定摘要＋列表滚动修复。原版或旧版 Pulse 会忽略 `icon`，继续显示通用拼图图标，用量读取不受影响；此前的 `custom-1.12.7-scroll.1` 只有滚动修复。源码、构建与发行说明见 [native-pulse](native-pulse/README.md#扩展图标支持)。
 
 旧版“每账号一个扩展”的目录，经核对为本项目所有后会迁移到项目 `.local/legacy-extensions-<时间>/` 中备份；其他扩展不受影响。`--keep-legacy` 可保留旧目录。
 
